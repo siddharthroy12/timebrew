@@ -1,0 +1,42 @@
+name: Build Android
+
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: "zulu"
+          java-version: "11"
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.13.7"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Apk
+        run: flutter build apk --split-per-abi
+
+      - name: Build App Bundle
+        run: flutter build appbundle
+
+      - name: Upload Apk
+        uses: actions/upload-artifact@v3
+        with:
+          name: apks
+          path: build/app/outputs/apk/release
+
+      - name: Upload App Bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: appbundle
+          path: build/app/outputs/bundle/release
