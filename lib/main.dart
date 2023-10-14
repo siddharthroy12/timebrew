@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timebrew/providers/tag_provider.dart';
 import 'package:timebrew/tabs/tags.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'tabs/timer.dart';
 import 'fab.dart';
 
@@ -23,41 +24,46 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => TagProvider())],
-      child: MaterialApp(
-        title: 'Timebrew',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: const ColorScheme.dark(),
-          useMaterial3: true,
-          dialogTheme: const DialogTheme(
-            actionsPadding: EdgeInsets.only(
-              bottom: 10,
-              right: 10,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(5),
+      child: DynamicColorBuilder(
+        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          return MaterialApp(
+            title: 'Timebrew',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              colorScheme: darkDynamic,
+              useMaterial3: true,
+              dialogTheme: const DialogTheme(
+                actionsPadding: EdgeInsets.only(
+                  bottom: 10,
+                  right: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(5),
+                  ),
+                ),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 15,
+                ),
+                border: const OutlineInputBorder(
+                  borderSide: BorderSide(width: 2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: darkDynamic?.primary ??
+                        const ColorScheme.dark().primary,
+                    width: 2,
+                  ),
+                ),
               ),
             ),
-          ),
-          inputDecorationTheme: InputDecorationTheme(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
-              horizontal: 15,
-            ),
-            border: const OutlineInputBorder(
-              borderSide: BorderSide(width: 2),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: const ColorScheme.dark().primary,
-                width: 2,
-              ),
-            ),
-          ),
-        ),
-        home: const Tabs(),
+            home: const Tabs(),
+          );
+        },
       ),
     );
   }
@@ -130,9 +136,12 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
       controller: _tcontroller,
       splashBorderRadius: BorderRadius.circular(50),
       indicator: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(50)),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(50),
+      ),
+      indicatorColor: Colors.transparent,
+      dividerColor: Colors.transparent,
       indicatorSize: TabBarIndicatorSize.tab,
       tabs: tabWidgets,
     );
