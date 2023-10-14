@@ -31,34 +31,35 @@ class _TimerState extends State<Timer> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 constraints: const BoxConstraints(maxWidth: 500),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      cursorHeight: 20,
-                      style: TextStyle(height: 1.2),
-                      decoration: InputDecoration(
-                        labelText: 'Task Description',
+                child: LayoutBuilder(builder: (context, constraints) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const TextField(
+                        cursorHeight: 20,
+                        style: TextStyle(height: 1.2),
+                        decoration: InputDecoration(
+                          labelText: 'Task Description',
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    DropdownMenu(
-                      expandedInsets:
-                          EdgeInsets.symmetric(vertical: 15, horizontal: 0),
-                      enableFilter: true,
-                      leadingIcon: Icon(Icons.checklist_rounded),
-                      label: Text('Task'),
-                      dropdownMenuEntries: [
-                        DropdownMenuEntry(value: 'hello', label: 'Hello')
-                      ],
-                      inputDecorationTheme: InputDecorationTheme(
-                        isDense: true,
+                      const SizedBox(
+                        height: 20,
                       ),
-                    ),
-                  ],
-                ),
+                      DropdownMenu(
+                        width: constraints.maxWidth,
+                        enableFilter: true,
+                        leadingIcon: const Icon(Icons.checklist_rounded),
+                        label: const Text('Task'),
+                        dropdownMenuEntries: const [
+                          DropdownMenuEntry(value: 'hello', label: 'Hello')
+                        ],
+                        inputDecorationTheme: const InputDecorationTheme(
+                          isDense: true,
+                        ),
+                      ),
+                    ],
+                  );
+                }),
               ),
               const SizedBox(
                 height: 70,
