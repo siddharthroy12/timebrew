@@ -60,9 +60,14 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
     return AlertDialog(
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(
             height: 10,
+          ),
+          Text('Create Tag', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(
+            height: 20,
           ),
           TextField(
             cursorHeight: 20,

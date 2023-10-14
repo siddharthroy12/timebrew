@@ -42,7 +42,6 @@ class MyApp extends StatelessWidget {
           ),
           inputDecorationTheme: InputDecorationTheme(
             isDense: true,
-            floatingLabelBehavior: FloatingLabelBehavior.never,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 18,
               horizontal: 15,
@@ -167,7 +166,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
           bottom: PreferredSize(
             preferredSize: buildTabBar(context).preferredSize,
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 10),
+              margin: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(50),
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.1),

@@ -54,13 +54,16 @@ class TagEntry extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                Text(milliseconds.toString(),
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  "No time spent",
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
             PopupMenuButton(

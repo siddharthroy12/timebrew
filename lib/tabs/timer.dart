@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../providers/tag_provider.dart';
+import 'package:provider/provider.dart';
 
 class Timer extends StatefulWidget {
   const Timer({super.key});
@@ -45,18 +47,28 @@ class _TimerState extends State<Timer> {
                       const SizedBox(
                         height: 20,
                       ),
-                      DropdownMenu(
-                        width: constraints.maxWidth,
-                        enableFilter: true,
-                        leadingIcon: const Icon(Icons.checklist_rounded),
-                        label: const Text('Task'),
-                        dropdownMenuEntries: const [
-                          DropdownMenuEntry(value: 'hello', label: 'Hello')
-                        ],
-                        inputDecorationTheme: const InputDecorationTheme(
-                          isDense: true,
-                        ),
-                      ),
+                      Builder(builder: (context) {
+                        List<Tag> tags = context.watch<TagProvider>().tags;
+
+                        List<DropdownMenuEntry> dropdownMenuEntries = [];
+
+                        for (Tag tag in tags) {
+                          dropdownMenuEntries.add(
+                            DropdownMenuEntry(value: tag.id, label: tag.name),
+                          );
+                        }
+
+                        return DropdownMenu(
+                          width: constraints.maxWidth,
+                          enableFilter: true,
+                          leadingIcon: const Icon(Icons.checklist_rounded),
+                          label: const Text('Task'),
+                          dropdownMenuEntries: dropdownMenuEntries,
+                          inputDecorationTheme: const InputDecorationTheme(
+                            isDense: true,
+                          ),
+                        );
+                      }),
                     ],
                   );
                 }),

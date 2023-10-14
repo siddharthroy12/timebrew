@@ -131,13 +131,21 @@ class _ExpandableFabState extends State<ExpandableFab>
   }
 
   Widget _buildTapToOpenFab() {
-    return FloatingActionButton(
-      onPressed: _toggle,
-      shape: const CircleBorder(),
-      child: AnimatedRotation(
-        turns: _open ? 1.0 / 8.0 : 0,
-        duration: const Duration(milliseconds: 100),
-        child: const Icon(Icons.add),
+    return TapRegion(
+      onTapOutside: (tap) {
+        setState(() {
+          _open = false;
+          _controller.reverse();
+        });
+      },
+      child: FloatingActionButton(
+        onPressed: _toggle,
+        shape: const CircleBorder(),
+        child: AnimatedRotation(
+          turns: _open ? 1.0 / 8.0 : 0,
+          duration: const Duration(milliseconds: 100),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
