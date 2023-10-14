@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:timebrew/extensions/hex_color.dart';
+import 'package:timebrew/providers/tag_provider.dart';
+import '../utils.dart';
 
 class CreateTagDialog extends StatefulWidget {
   const CreateTagDialog({super.key});
@@ -17,7 +20,7 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
     Colors.green.toHex(),
     Colors.white.toHex()
   ];
-  late String? color;
+  late String color;
 
   @override
   void initState() {
@@ -33,7 +36,7 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
         groupValue: color,
         onChanged: (String? value) {
           setState(() {
-            color = value;
+            color = value ?? '#ffffff';
           });
         },
         fillColor: MaterialStateProperty.resolveWith<Color>(
@@ -43,6 +46,13 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
       ));
     }
     return widgets;
+  }
+
+  void _onCreate(BuildContext context) {
+    context
+        .read<TagProvider>()
+        .addTag(Tag(name: name, color: color, id: idGenerator()));
+    Navigator.of(context).pop();
   }
 
   @override
@@ -79,7 +89,7 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
           child: const Text('CLOSE'),
         ),
         TextButton(
-          onPressed: name.isNotEmpty ? () => Navigator.of(context).pop() : null,
+          onPressed: name.isNotEmpty ? () => _onCreate(context) : null,
           child: const Text('ADD'),
         ),
       ],

@@ -4,7 +4,7 @@ class Tag {
   String? id;
   String name;
   String color;
-  Tag(this.name, this.color);
+  Tag({required this.name, required this.color, this.id});
 }
 
 class TagProvider extends ChangeNotifier {
