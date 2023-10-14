@@ -1,0 +1,27 @@
+name: Build Windows
+
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.13.7"
+          channel: "stable"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build
+        run: flutter build windows
+
+      - name: Upload Build
+        uses: actions/upload-artifact@v3
+        with:
+          name: bundle
+          path: build/windows/runner/Release/*
