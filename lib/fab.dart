@@ -175,7 +175,7 @@ class _ExpandingActionButton extends StatelessWidget {
           progress.value * maxDistance,
         );
         return Positioned(
-          right: 10.0,
+          right: 9.0,
           bottom: 4.0 + offset.dy,
           child: Transform.rotate(
             angle: (1.0 - progress.value) * pi / 2,

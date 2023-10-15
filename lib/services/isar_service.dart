@@ -105,6 +105,12 @@ class IsarService {
     yield* isar.tags.where().watch(fireImmediately: true);
   }
 
+  Future<List<Tag>> getTagList() async {
+    final isar = await db;
+
+    return await isar.tags.where().findAll();
+  }
+
   Future<Tag?> getTagById(Id id) async {
     final isar = await db;
     return await isar.tags.get(id);

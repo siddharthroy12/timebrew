@@ -66,7 +66,7 @@ class TagEntry extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  '#$name',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
