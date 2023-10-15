@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'tabs/timer.dart';
-import 'fab.dart';
+import 'popups/create_tag.dart';
+import 'popups/create_task.dart';
 
 class TabEntry {
   String title;
   IconData icon;
   TabEntry({required this.title, required this.icon});
 }
+
+enum Dialog { tag, task }
 
 void main() {
   runApp(const MyApp());
@@ -75,12 +78,19 @@ class Tabs extends StatefulWidget {
 
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   late TabController _tcontroller;
-  final List<String> titleList = ["Timer", "Logs", "Tasks", "Tags", "Stats"];
   String currentTitle = "";
+
+  List<TabEntry> tabs = [
+    TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
+    TabEntry(title: 'Logs', icon: Icons.history_rounded),
+    TabEntry(title: 'Tasks', icon: Icons.checklist_rounded),
+    TabEntry(title: 'Tags', icon: Icons.tag_rounded),
+    TabEntry(title: 'Stats', icon: Icons.analytics_rounded),
+  ];
 
   @override
   void initState() {
-    currentTitle = titleList[0];
+    currentTitle = tabs[0].title;
     _tcontroller = TabController(length: 5, vsync: this);
     _tcontroller.addListener(changeTitle); // Registering listener
     super.initState();
@@ -90,17 +100,23 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   void changeTitle() {
     setState(() {
       // get index of active tab & change current appbar title
-      currentTitle = titleList[_tcontroller.index];
+      currentTitle = tabs[_tcontroller.index].title;
     });
   }
 
-  List<TabEntry> tabs = [
-    TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
-    TabEntry(title: 'Logs', icon: Icons.history_rounded),
-    TabEntry(title: 'Tasks', icon: Icons.checklist_rounded),
-    TabEntry(title: 'Tags', icon: Icons.tag_rounded),
-    TabEntry(title: 'Stats', icon: Icons.analytics_rounded),
-  ];
+  void _showAction(BuildContext context, Dialog dialog) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        switch (dialog) {
+          case Dialog.tag:
+            return const CreateTagDialog();
+          case Dialog.task:
+            return const CreateTaskDialog();
+        }
+      },
+    );
+  }
 
   TabBar buildTabBar(BuildContext context) {
     List<Tab> tabWidgets = [];
@@ -189,7 +205,31 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             Tab(icon: Icon(Icons.analytics_rounded)),
           ],
         ),
-        floatingActionButton: const Fab(),
+        floatingActionButton: Builder(
+          builder: (context) {
+            if (currentTitle != 'Timer' && currentTitle != 'Stats') {
+              return FloatingActionButton.extended(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                onPressed: () {
+                  switch (currentTitle) {
+                    case 'Tasks':
+                      _showAction(context, Dialog.task);
+                      break;
+                    case 'Tags':
+                      _showAction(context, Dialog.tag);
+                      break;
+                  }
+                },
+                label: Text(
+                    'Add ${currentTitle.substring(0, currentTitle.length - 1)}'),
+                icon: const Icon(Icons.add_rounded),
+              );
+            }
+            return Container();
+          },
+        ),
       ),
     );
   }

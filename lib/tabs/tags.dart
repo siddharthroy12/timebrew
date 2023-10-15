@@ -18,11 +18,12 @@ class _TagsState extends State<Tags> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Tag>>(
+      initialData: const [],
       stream: isar.getTagStream(),
       builder: (context, snapshot) {
         return ListView.builder(
           padding: const EdgeInsets.all(8),
-          itemCount: snapshot.data != null ? snapshot.data!.length : 0,
+          itemCount: snapshot.data!.length,
           itemBuilder: (BuildContext context, int index) {
             Tag tag = snapshot.data![index];
             return TagEntry(
