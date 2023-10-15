@@ -15,8 +15,11 @@ class IsarService {
     final dir = await getApplicationDocumentsDirectory();
 
     if (Isar.instanceNames.isEmpty) {
-      return await Isar.open([TimelogSchema, TaskSchema, TagSchema],
-          directory: dir.path);
+      return await Isar.open(
+        [TimelogSchema, TaskSchema, TagSchema],
+        directory: dir.path,
+        inspector: false,
+      );
     }
 
     return Future.value(Isar.getInstance());

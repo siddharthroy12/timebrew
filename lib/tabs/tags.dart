@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/models/tag.dart';
+import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/popups/create_tag.dart';
 
@@ -19,22 +20,19 @@ class _TagsState extends State<Tags> {
     return StreamBuilder<List<Tag>>(
       stream: isar.getTagStream(),
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: snapshot.data!.length,
-            itemBuilder: (BuildContext context, int index) {
-              Tag tag = snapshot.data![index];
-              return TagEntry(
-                name: tag.name,
-                id: tag.id,
-                milliseconds: 0,
-                color: HexColor.fromHex(tag.color),
-              );
-            },
-          );
-        }
-        return Container();
+        return ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: snapshot.data != null ? snapshot.data!.length : 0,
+          itemBuilder: (BuildContext context, int index) {
+            Tag tag = snapshot.data![index];
+            return TagEntry(
+              name: tag.name,
+              id: tag.id,
+              milliseconds: 0,
+              color: HexColor.fromHex(tag.color),
+            );
+          },
+        );
       },
     );
   }
@@ -58,6 +56,7 @@ class TagEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: color,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Row(
@@ -96,7 +95,26 @@ class TagEntry extends StatelessWidget {
                   value: 'delete',
                   child: const Text('Delete'),
                   onTap: () {
-                    isar.deleteTag(id);
+                    showDialog<void>(
+                      context: context,
+                      builder: (context) {
+                        return ConfirmDeleteDialog(
+                          description: 'Are you sure you want to delete $name',
+                          onConfirm: () {
+                            isar.deleteTag(id);
+
+                            final snackBar = SnackBar(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              content: Text('Tag $name deleted'),
+                            );
+
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(snackBar);
+                          },
+                        );
+                      },
+                    );
                   },
                 ),
               ],

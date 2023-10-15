@@ -18,9 +18,9 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
   List<String> options = [
     Colors.orange.toHex(),
     Colors.red.toHex(),
-    Colors.blue.toHex(),
+    Colors.pink.toHex(),
     Colors.green.toHex(),
-    Colors.white.toHex()
+    Colors.indigo.toHex()
   ];
   late String color;
   final isar = IsarService();
