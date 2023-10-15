@@ -62,6 +62,16 @@ class IsarService {
     });
   }
 
+  Future<Task?> getTaskById(Id id) async {
+    final isar = await db;
+    return await isar.tasks.get(id);
+  }
+
+  Stream<List<Task>> getTaskStream() async* {
+    final isar = await db;
+    yield* isar.tasks.where().watch(fireImmediately: true);
+  }
+
   Future<void> addTask(String name, List<Id> tagIds) async {
     final isar = await db;
     final Task task = Task()..name = name;
@@ -74,8 +84,8 @@ class IsarService {
     }
 
     await isar.writeTxn(() async {
-      await task.tags.save();
       await isar.tasks.put(task);
+      await task.tags.save();
     });
   }
 

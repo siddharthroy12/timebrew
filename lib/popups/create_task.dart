@@ -29,11 +29,23 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
         tags = value;
       });
     });
+    loadTaskData();
+  }
+
+  void loadTaskData() async {
+    var task = await isar.getTaskById(widget.id!);
+    if (task != null) {
+      name = task.name;
+      selectedTags = task.tags.map((e) => e.id).toList();
+      textFieldController.text = name;
+    }
   }
 
   void _onSave(BuildContext context) {
     if (widget.id != null) {
-    } else {}
+    } else {
+      isar.addTask(name, selectedTags);
+    }
     Navigator.of(context).pop();
   }
 

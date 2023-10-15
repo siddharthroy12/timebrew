@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:timebrew/tabs/tasks.dart';
 import 'tabs/timer.dart';
 import 'popups/create_tag.dart';
 import 'popups/create_task.dart';
@@ -200,7 +201,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
           children: const [
             Center(child: Timer()),
             Tab(icon: Icon(Icons.history_rounded)),
-            Tab(icon: Icon(Icons.checklist_rounded)),
+            Tasks(),
             Tags(),
             Tab(icon: Icon(Icons.analytics_rounded)),
           ],
