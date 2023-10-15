@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../providers/tag_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:timebrew/models/tag.dart';
 
 class Timer extends StatefulWidget {
   const Timer({super.key});
@@ -48,7 +47,7 @@ class _TimerState extends State<Timer> {
                         height: 20,
                       ),
                       Builder(builder: (context) {
-                        List<Tag> tags = context.watch<TagProvider>().tags;
+                        List<Tag> tags = [];
 
                         List<DropdownMenuEntry> dropdownMenuEntries = [];
 

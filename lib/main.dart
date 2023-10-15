@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:timebrew/providers/tag_provider.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'tabs/timer.dart';
@@ -22,49 +20,46 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => TagProvider())],
-      child: DynamicColorBuilder(
-        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-          return MaterialApp(
-            title: 'Timebrew',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              colorScheme: darkDynamic,
-              useMaterial3: true,
-              dialogTheme: const DialogTheme(
-                actionsPadding: EdgeInsets.only(
-                  bottom: 10,
-                  right: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(5),
-                  ),
-                ),
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        return MaterialApp(
+          title: 'Timebrew',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: darkDynamic,
+            useMaterial3: true,
+            dialogTheme: const DialogTheme(
+              actionsPadding: EdgeInsets.only(
+                bottom: 10,
+                right: 10,
               ),
-              inputDecorationTheme: InputDecorationTheme(
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 18,
-                  horizontal: 15,
-                ),
-                border: const OutlineInputBorder(
-                  borderSide: BorderSide(width: 2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: darkDynamic?.primary ??
-                        const ColorScheme.dark().primary,
-                    width: 2,
-                  ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(5),
                 ),
               ),
             ),
-            home: const Tabs(),
-          );
-        },
-      ),
+            inputDecorationTheme: InputDecorationTheme(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 18,
+                horizontal: 15,
+              ),
+              border: const OutlineInputBorder(
+                borderSide: BorderSide(width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color:
+                      darkDynamic?.primary ?? const ColorScheme.dark().primary,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+          home: const Tabs(),
+        );
+      },
     );
   }
 }

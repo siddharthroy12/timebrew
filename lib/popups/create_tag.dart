@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
-import 'package:timebrew/providers/tag_provider.dart';
-import '../utils.dart';
+import 'package:timebrew/models/tag.dart';
+import 'package:timebrew/services/isar_service.dart';
 
 class CreateTagDialog extends StatefulWidget {
-  const CreateTagDialog({super.key});
+  const CreateTagDialog({super.key, this.id});
+
+  final Id? id;
 
   @override
   State<CreateTagDialog> createState() => _CreateTagDialogState();
@@ -21,11 +23,26 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
     Colors.white.toHex()
   ];
   late String color;
+  final isar = IsarService();
+  var textFieldController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     color = options[0];
+
+    if (widget.id != null) {
+      loadTagData();
+    }
+  }
+
+  void loadTagData() async {
+    var tag = await isar.getTagById(widget.id!);
+    if (tag != null) {
+      name = tag.name;
+      color = tag.color;
+      textFieldController.text = name;
+    }
   }
 
   List<Widget> _buidColorOptions() {
@@ -48,10 +65,15 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
     return widgets;
   }
 
-  void _onCreate(BuildContext context) {
-    context
-        .read<TagProvider>()
-        .addTag(Tag(name: name, color: color, id: idGenerator()));
+  void _onSave(BuildContext context) {
+    if (widget.id != null) {
+      isar.updateTag(Tag()
+        ..id = widget.id!
+        ..name = name
+        ..color = color);
+    } else {
+      isar.addTag(name, color);
+    }
     Navigator.of(context).pop();
   }
 
@@ -65,11 +87,15 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
           const SizedBox(
             height: 10,
           ),
-          Text('Create Tag', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            widget.id == null ? 'Create Tag' : 'Update Tag',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(
             height: 20,
           ),
           TextField(
+            controller: textFieldController,
             cursorHeight: 20,
             style: const TextStyle(height: 1.2),
             decoration: const InputDecoration(label: Text('Tag name')),
@@ -94,8 +120,8 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
           child: const Text('CLOSE'),
         ),
         TextButton(
-          onPressed: name.isNotEmpty ? () => _onCreate(context) : null,
-          child: const Text('ADD'),
+          onPressed: name.isNotEmpty ? () => _onSave(context) : null,
+          child: const Text('SAVE'),
         ),
       ],
     );

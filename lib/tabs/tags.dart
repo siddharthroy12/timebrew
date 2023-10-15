@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:timebrew/extensions/hex_color.dart';
-import '../providers/tag_provider.dart';
+import 'package:timebrew/models/tag.dart';
+import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/popups/create_tag.dart';
 
 class Tags extends StatefulWidget {
   const Tags({super.key});
@@ -11,21 +12,29 @@ class Tags extends StatefulWidget {
 }
 
 class _TagsState extends State<Tags> {
+  final isar = IsarService();
+
   @override
   Widget build(BuildContext context) {
-    List<Tag> tags = context.watch<TagProvider>().tags;
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: tags.length,
-      itemBuilder: (BuildContext context, int index) {
-        Tag tag = tags[index];
-        return TagEntry(
-          name: tag.name,
-          id: tag.id ?? '',
-          milliseconds: 0,
-          color: HexColor.fromHex(tag.color),
-        );
+    return StreamBuilder<List<Tag>>(
+      stream: isar.getTagStream(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: snapshot.data!.length,
+            itemBuilder: (BuildContext context, int index) {
+              Tag tag = snapshot.data![index];
+              return TagEntry(
+                name: tag.name,
+                id: tag.id,
+                milliseconds: 0,
+                color: HexColor.fromHex(tag.color),
+              );
+            },
+          );
+        }
+        return Container();
       },
     );
   }
@@ -33,11 +42,12 @@ class _TagsState extends State<Tags> {
 
 class TagEntry extends StatelessWidget {
   final String name;
-  final String id;
+  final int id;
   final int milliseconds;
   final Color color;
+  final isar = IsarService();
 
-  const TagEntry({
+  TagEntry({
     super.key,
     required this.name,
     required this.id,
@@ -68,13 +78,26 @@ class TagEntry extends StatelessWidget {
             ),
             PopupMenuButton(
               itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                const PopupMenuItem(
-                  value: 'Hello',
-                  child: Text('Edit'),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: const Text('Edit'),
+                  onTap: () {
+                    showDialog<void>(
+                      context: context,
+                      builder: (context) {
+                        return CreateTagDialog(
+                          id: id,
+                        );
+                      },
+                    );
+                  },
                 ),
-                const PopupMenuItem(
-                  value: 'Hello',
-                  child: Text('Delete'),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: const Text('Delete'),
+                  onTap: () {
+                    isar.deleteTag(id);
+                  },
                 ),
               ],
             )
