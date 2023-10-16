@@ -29,7 +29,9 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
         tags = value;
       });
     });
-    loadTaskData();
+    if (widget.id != null) {
+      loadTaskData();
+    }
   }
 
   void loadTaskData() async {
