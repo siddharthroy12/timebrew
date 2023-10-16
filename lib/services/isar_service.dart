@@ -101,6 +101,7 @@ class IsarService {
     var task = await isar.tasks.get(id);
 
     if (task != null) {
+      task.name = name;
       task.tags.removeWhere((element) => !tags.contains(element.id));
 
       for (var tag in tags) {
