@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:timebrew/models/tag.dart';
+import 'package:provider/provider.dart';
+import 'package:timebrew/models/task.dart';
+import 'package:timebrew/notifiers/timer_notifier.dart';
+import 'package:timebrew/services/isar_service.dart';
 
 class Timer extends StatefulWidget {
   const Timer({super.key});
@@ -9,8 +12,18 @@ class Timer extends StatefulWidget {
 }
 
 class _TimerState extends State<Timer> {
+  final _isar = IsarService();
+
   @override
   Widget build(BuildContext context) {
+    final running = context.watch<TimerNotifier>().running;
+    final timeSinceStart = context.watch<TimerNotifier>().timeSinceStart;
+    final toggleTracking = context.watch<TimerNotifier>().toggleTracking;
+    final descriptionEditorController =
+        context.watch<TimerNotifier>().descriptionEditorController;
+    final selectedTask = context.watch<TimerNotifier>().selectedTask;
+    final setSelectedTask = context.watch<TimerNotifier>().setSelectedTask;
+
     return Row(
       children: [
         Expanded(
@@ -18,13 +31,19 @@ class _TimerState extends State<Timer> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                '00:00:00',
-                style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+              Text(
+                Duration(milliseconds: timeSinceStart).toString().split('.')[0],
+                style: const TextStyle(
+                  fontSize: 50,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               IconButton.filled(
-                onPressed: () {},
-                icon: const Icon(Icons.play_arrow),
+                iconSize: 36,
+                onPressed: selectedTask != null ? toggleTracking : null,
+                icon: Icon(
+                  running ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                ),
               ),
               const SizedBox(
                 height: 20,
@@ -36,38 +55,45 @@ class _TimerState extends State<Timer> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const TextField(
+                      TextField(
+                        controller: descriptionEditorController,
                         cursorHeight: 20,
-                        style: TextStyle(height: 1.2),
-                        decoration: InputDecoration(
+                        style: const TextStyle(height: 1.2),
+                        decoration: const InputDecoration(
                           labelText: 'Task Description',
                         ),
                       ),
                       const SizedBox(
                         height: 20,
                       ),
-                      Builder(builder: (context) {
-                        List<Tag> tags = [];
+                      StreamBuilder<List<Task>>(
+                          initialData: const [],
+                          stream: _isar.getTaskStream(),
+                          builder: (context, tasks) {
+                            List<DropdownMenuEntry> dropdownMenuEntries = [];
 
-                        List<DropdownMenuEntry> dropdownMenuEntries = [];
+                            for (var task in tasks.data!) {
+                              dropdownMenuEntries.add(
+                                DropdownMenuEntry(
+                                    value: task.id, label: task.name),
+                              );
+                            }
 
-                        for (Tag tag in tags) {
-                          dropdownMenuEntries.add(
-                            DropdownMenuEntry(value: tag.id, label: tag.name),
-                          );
-                        }
-
-                        return DropdownMenu(
-                          width: constraints.maxWidth,
-                          enableFilter: true,
-                          leadingIcon: const Icon(Icons.checklist_rounded),
-                          label: const Text('Task'),
-                          dropdownMenuEntries: dropdownMenuEntries,
-                          inputDecorationTheme: const InputDecorationTheme(
-                            isDense: true,
-                          ),
-                        );
-                      }),
+                            return DropdownMenu(
+                              initialSelection: selectedTask,
+                              width: constraints.maxWidth,
+                              enableFilter: false,
+                              leadingIcon: const Icon(Icons.checklist_rounded),
+                              label: const Text('Task'),
+                              onSelected: (taskId) {
+                                setSelectedTask(taskId);
+                              },
+                              dropdownMenuEntries: dropdownMenuEntries,
+                              inputDecorationTheme: const InputDecorationTheme(
+                                isDense: true,
+                              ),
+                            );
+                          }),
                     ],
                   );
                 }),
