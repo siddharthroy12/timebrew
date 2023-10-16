@@ -24,8 +24,9 @@ class Tabs extends StatefulWidget {
 }
 
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
-  late TabController _tcontroller;
+  late TabController _tabController;
   String currentTitle = "";
+  int _tabIndex = 0;
 
   List<TabEntry> tabs = [
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
@@ -38,8 +39,18 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     currentTitle = tabs[0].title;
-    _tcontroller = TabController(length: 5, vsync: this);
-    _tcontroller.addListener(changeTitle); // Registering listener
+    _tabController = TabController(length: 5, vsync: this);
+    _tabController.addListener(changeTitle); // Registering listener
+
+    _tabController.animation?.addListener(() {
+      int indexChange = _tabController.offset.round();
+      int index = _tabController.index + indexChange;
+
+      if (index != _tabIndex) {
+        setState(() => _tabIndex = index);
+        changeTitle();
+      }
+    });
     super.initState();
   }
 
@@ -47,7 +58,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   void changeTitle() {
     setState(() {
       // get index of active tab & change current appbar title
-      currentTitle = tabs[_tcontroller.index].title;
+      currentTitle = tabs[_tabController.index].title;
     });
   }
 
@@ -91,7 +102,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     }
 
     return TabBar(
-      controller: _tcontroller,
+      controller: _tabController,
       splashBorderRadius: BorderRadius.circular(50),
       indicator: BoxDecoration(
         color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
@@ -143,8 +154,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
           ),
         ),
         body: TabBarView(
-          dragStartBehavior: DragStartBehavior.down,
-          controller: _tcontroller,
+          controller: _tabController,
           children: const [
             Center(child: Timer()),
             Tab(icon: Icon(Icons.history_rounded)),
