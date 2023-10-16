@@ -35,9 +35,11 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
   void loadTaskData() async {
     var task = await isar.getTaskById(widget.id!);
     if (task != null) {
-      name = task.name;
-      selectedTags = task.tags.map((e) => e.id).toList();
-      textFieldController.text = name;
+      setState(() {
+        name = task.name;
+        selectedTags = task.tags.map((e) => e.id).toList();
+        textFieldController.text = name;
+      });
     }
   }
 

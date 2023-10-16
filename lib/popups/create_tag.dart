@@ -39,9 +39,11 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
   void loadTagData() async {
     var tag = await isar.getTagById(widget.id!);
     if (tag != null) {
-      name = tag.name;
-      color = tag.color;
-      textFieldController.text = name;
+      setState(() {
+        name = tag.name;
+        color = tag.color;
+        textFieldController.text = name;
+      });
     }
   }
 
