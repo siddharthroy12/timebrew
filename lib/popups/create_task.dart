@@ -41,8 +41,9 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
     }
   }
 
-  void _onSave(BuildContext context) {
+  void _onSave(BuildContext context) async {
     if (widget.id != null) {
+      isar.updateTask(widget.id!, name, selectedTags);
     } else {
       isar.addTask(name, selectedTags);
     }

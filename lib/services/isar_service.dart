@@ -89,13 +89,25 @@ class IsarService {
     });
   }
 
-  Future<void> updateTask(Task task) async {
+  Future<void> updateTask(Id id, String name, List<Id> tags) async {
     final isar = await db;
+    var task = await isar.tasks.get(id);
 
-    await isar.writeTxn(() async {
-      await task.tags.save();
-      await isar.tasks.put(task);
-    });
+    if (task != null) {
+      task.tags.removeWhere((element) => !tags.contains(element.id));
+
+      for (var tag in tags) {
+        var t = await isar.tags.get(tag);
+        if (t != null) {
+          task.tags.add(t);
+        }
+      }
+
+      await isar.writeTxn(() async {
+        await isar.tasks.put(task);
+        await task.tags.save();
+      });
+    }
   }
 
   Future<void> deleteTask(Id id, bool deleteTimelogs) async {
