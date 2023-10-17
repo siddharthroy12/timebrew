@@ -17,7 +17,9 @@ class MyApp extends StatelessWidget {
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         return MultiProvider(
-          providers: [ChangeNotifierProvider(create: (_) => TimerNotifier())],
+          providers: [
+            ChangeNotifierProvider(create: (_) => TimerNotifier()),
+          ],
           child: MaterialApp(
             title: 'Timebrew',
             debugShowCheckedModeBanner: false,

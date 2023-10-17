@@ -12,11 +12,16 @@ class Tags extends StatefulWidget {
   State<Tags> createState() => _TagsState();
 }
 
-class _TagsState extends State<Tags> {
+class _TagsState extends State<Tags> with AutomaticKeepAliveClientMixin {
   final isar = IsarService();
 
   @override
+  bool get wantKeepAlive => true; //Set to true
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return StreamBuilder<List<Tag>>(
       initialData: const [],
       stream: isar.getTagStream(),

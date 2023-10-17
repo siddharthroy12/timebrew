@@ -11,11 +11,16 @@ class Timer extends StatefulWidget {
   State<Timer> createState() => _TimerState();
 }
 
-class _TimerState extends State<Timer> {
+class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
   final _isar = IsarService();
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final running = context.watch<TimerNotifier>().running;
     final timeSinceStart = context.watch<TimerNotifier>().timeSinceStart;
     final toggleTracking = context.watch<TimerNotifier>().toggleTracking;
@@ -68,34 +73,35 @@ class _TimerState extends State<Timer> {
                         height: 20,
                       ),
                       StreamBuilder<List<Task>>(
-                          initialData: const [],
-                          stream: _isar.getTaskStream(),
-                          builder: (context, tasks) {
-                            List<DropdownMenuEntry> dropdownMenuEntries = [];
+                        initialData: const [],
+                        stream: _isar.getTaskStream(),
+                        builder: (context, tasks) {
+                          List<DropdownMenuEntry> dropdownMenuEntries = [];
 
-                            for (var task in tasks.data!) {
-                              dropdownMenuEntries.add(
-                                DropdownMenuEntry(
-                                    value: task.id, label: task.name),
-                              );
-                            }
-
-                            return DropdownMenu(
-                              initialSelection: selectedTask,
-                              width: constraints.maxWidth,
-                              enabled: !running,
-                              enableFilter: false,
-                              leadingIcon: const Icon(Icons.checklist_rounded),
-                              label: const Text('Task'),
-                              onSelected: (taskId) {
-                                setSelectedTask(taskId);
-                              },
-                              dropdownMenuEntries: dropdownMenuEntries,
-                              inputDecorationTheme: const InputDecorationTheme(
-                                isDense: true,
-                              ),
+                          for (var task in tasks.data!) {
+                            dropdownMenuEntries.add(
+                              DropdownMenuEntry(
+                                  value: task.id, label: task.name),
                             );
-                          }),
+                          }
+
+                          return DropdownMenu(
+                            initialSelection: selectedTask,
+                            width: constraints.maxWidth,
+                            enabled: !running,
+                            enableFilter: false,
+                            leadingIcon: const Icon(Icons.checklist_rounded),
+                            label: const Text('Task'),
+                            onSelected: (taskId) {
+                              setSelectedTask(taskId);
+                            },
+                            dropdownMenuEntries: dropdownMenuEntries,
+                            inputDecorationTheme: const InputDecorationTheme(
+                              isDense: true,
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   );
                 }),

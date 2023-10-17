@@ -13,30 +13,34 @@ class Tasks extends StatefulWidget {
   State<Tasks> createState() => _TasksState();
 }
 
-class _TasksState extends State<Tasks> {
+class _TasksState extends State<Tasks> with AutomaticKeepAliveClientMixin {
   final isar = IsarService();
 
   @override
+  bool get wantKeepAlive => true; //Set to true
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return StreamBuilder<List<Task>>(
-      initialData: const [],
-      stream: isar.getTaskStream(),
-      builder: (context, snapshot) {
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (BuildContext context, int index) {
-            Task task = snapshot.data![index];
-            return TaskEntry(
-              name: task.name,
-              id: task.id,
-              milliseconds: 0,
-              tags: task.tags.toList(),
-            );
-          },
-        );
-      },
-    );
+        initialData: const [],
+        stream: isar.getTaskStream(),
+        builder: (context, snapshot) {
+          return ListView.builder(
+            padding: const EdgeInsets.all(8),
+            itemCount: snapshot.data!.length,
+            itemBuilder: (BuildContext context, int index) {
+              Task task = snapshot.data![index];
+              return TaskEntry(
+                name: task.name,
+                id: task.id,
+                milliseconds: 0,
+                tags: task.tags.toList(),
+              );
+            },
+          );
+        });
   }
 }
 
