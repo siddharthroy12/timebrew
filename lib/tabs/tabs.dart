@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'timer.dart';
@@ -39,7 +38,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     currentTitle = tabs[0].title;
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: tabs.length, vsync: this);
     _tabController.addListener(changeTitle); // Registering listener
 
     _tabController.animation?.addListener(() {
@@ -58,7 +57,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   void changeTitle() {
     setState(() {
       // get index of active tab & change current appbar title
-      currentTitle = tabs[_tabController.index].title;
+      currentTitle = tabs[_tabIndex].title;
     });
   }
 

@@ -56,6 +56,7 @@ class _TimerState extends State<Timer> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       TextField(
+                        enabled: !running,
                         controller: descriptionEditorController,
                         cursorHeight: 20,
                         style: const TextStyle(height: 1.2),
@@ -82,6 +83,7 @@ class _TimerState extends State<Timer> {
                             return DropdownMenu(
                               initialSelection: selectedTask,
                               width: constraints.maxWidth,
+                              enabled: !running,
                               enableFilter: false,
                               leadingIcon: const Icon(Icons.checklist_rounded),
                               label: const Text('Task'),
