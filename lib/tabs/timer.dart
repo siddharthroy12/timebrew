@@ -81,7 +81,9 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                           for (var task in tasks.data!) {
                             dropdownMenuEntries.add(
                               DropdownMenuEntry(
-                                  value: task.id, label: task.name),
+                                value: task.id,
+                                label: task.name,
+                              ),
                             );
                           }
 
