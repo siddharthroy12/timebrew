@@ -20,6 +20,12 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
   Timelog? _trackingTimelog;
   late async.Timer _timer;
 
+  @override
+  initState() {
+    super.initState();
+    checkForRunningTask();
+  }
+
   setSelectedTask(selectedTask) {
     setState(() {
       _selectedTask = selectedTask;
