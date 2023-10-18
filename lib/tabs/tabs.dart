@@ -155,7 +155,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
         body: TabBarView(
           controller: _tabController,
           children: const [
-            Center(child: Timer()),
+            Timer(),
             Tab(icon: Icon(Icons.history_rounded)),
             Tasks(),
             Tags(),

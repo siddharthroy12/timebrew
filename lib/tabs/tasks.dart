@@ -65,52 +65,58 @@ class TaskEntry extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      name,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      "No time spent",
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: tags
-                      .map(
-                        (tag) => ActionChip(
-                          onPressed: () {},
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(5),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        "No time spent",
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: tags
+                        .map(
+                          (tag) => ActionChip(
+                            visualDensity: VisualDensity.standard,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            onPressed: () {},
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(5),
+                              ),
                             ),
+                            color: MaterialStateProperty.resolveWith((states) {
+                              return HexColor.fromHex(tag.color);
+                            }),
+                            side: const BorderSide(
+                              width: 0,
+                              color: Colors.transparent,
+                            ),
+                            label: Text('#${tag.name}'),
                           ),
-                          color: MaterialStateProperty.resolveWith((states) {
-                            return HexColor.fromHex(tag.color);
-                          }),
-                          side: const BorderSide(
-                              width: 0, color: Colors.transparent),
-                          label: Text('#${tag.name}'),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
             PopupMenuButton(
               itemBuilder: (BuildContext context) => <PopupMenuEntry>[
