@@ -24,23 +24,24 @@ class _TasksState extends State<Tasks> with AutomaticKeepAliveClientMixin {
     super.build(context);
 
     return StreamBuilder<List<Task>>(
-        initialData: const [],
-        stream: isar.getTaskStream(),
-        builder: (context, snapshot) {
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: snapshot.data!.length,
-            itemBuilder: (BuildContext context, int index) {
-              Task task = snapshot.data![index];
-              return TaskEntry(
-                name: task.name,
-                id: task.id,
-                milliseconds: 0,
-                tags: task.tags.toList(),
-              );
-            },
-          );
-        });
+      initialData: const [],
+      stream: isar.getTaskStream(),
+      builder: (context, snapshot) {
+        return ListView.builder(
+          padding: const EdgeInsets.all(8),
+          itemCount: snapshot.data!.length,
+          itemBuilder: (BuildContext context, int index) {
+            Task task = snapshot.data![index];
+            return TaskEntry(
+              name: task.name,
+              id: task.id,
+              milliseconds: 0,
+              tags: task.tags.toList(),
+            );
+          },
+        );
+      },
+    );
   }
 }
 
@@ -94,9 +95,6 @@ class TaskEntry extends StatelessWidget {
                     children: tags
                         .map(
                           (tag) => ActionChip(
-                            visualDensity: VisualDensity.standard,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
                             onPressed: () {},
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.all(

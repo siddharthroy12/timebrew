@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
-import './tabs/tabs.dart';
+import 'tabs/tabs.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,6 +20,8 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             colorScheme: darkDynamic,
             useMaterial3: true,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             dialogTheme: const DialogTheme(
               actionsPadding: EdgeInsets.only(
                 bottom: 10,

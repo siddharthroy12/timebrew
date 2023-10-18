@@ -69,10 +69,12 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
 
   void _onSave(BuildContext context) {
     if (widget.id != null) {
-      isar.updateTag(Tag()
-        ..id = widget.id!
-        ..name = name
-        ..color = color);
+      isar.updateTag(
+        Tag()
+          ..id = widget.id!
+          ..name = name
+          ..color = color,
+      );
     } else {
       isar.addTag(name, color);
     }

@@ -91,8 +91,6 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
               bool selected = selectedTags.contains(tag.id);
               dropdownMenuEntries.add(
                 FilterChip(
-                  visualDensity: VisualDensity.standard,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(
                       Radius.circular(5),

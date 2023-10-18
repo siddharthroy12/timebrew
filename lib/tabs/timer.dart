@@ -156,6 +156,14 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                                 DropdownMenuEntry(
                                   value: task.id,
                                   label: task.name,
+                                  style: ButtonStyle(
+                                    padding: MaterialStateProperty.resolveWith(
+                                      (states) => const EdgeInsets.symmetric(
+                                        horizontal: 40,
+                                        vertical: 10,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               );
                             }
