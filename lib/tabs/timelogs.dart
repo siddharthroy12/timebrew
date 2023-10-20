@@ -51,6 +51,8 @@ class _TimelogsState extends State<Timelogs>
             task: (element.task.value?.name ?? ''),
             description: element.description,
             milliseconds: element.endTime - element.startTime,
+            startTime: element.startTime,
+            endTime: element.endTime,
           ),
           itemComparator: (item1, item2) => item1.startTime.compareTo(
             item2.startTime,
@@ -67,6 +69,8 @@ class TimelogEntry extends StatelessWidget {
   final Id id;
   final String task;
   final String description;
+  final int startTime;
+  final int endTime;
   final int milliseconds;
   final isar = IsarService();
 
@@ -75,94 +79,120 @@ class TimelogEntry extends StatelessWidget {
     required this.id,
     required this.task,
     required this.description,
+    required this.startTime,
+    required this.endTime,
     required this.milliseconds,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        task,
-                        style: Theme.of(context).textTheme.titleMedium,
+    return Row(
+      children: [
+        SizedBox(
+          width: 80,
+          child: Column(
+            children: [
+              Text(millisecondsToTime(startTime)),
+              const SizedBox(
+                height: 35,
+                child: VerticalDivider(),
+              ),
+              Text(millisecondsToTime(endTime)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Card(
+            child: SizedBox(
+              height: 100,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                task,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                millisecondsToReadable(milliseconds),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                          Builder(builder: (context) {
+                            if (description.isEmpty) {
+                              return Container();
+                            }
+                            return Column(
+                              children: [
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Text(
+                                  description,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
                       ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                        millisecondsToReadable(milliseconds),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                  Builder(builder: (context) {
-                    if (description.isEmpty) {
-                      return Container();
-                    }
-                    return Column(
-                      children: [
-                        const SizedBox(
-                          height: 10,
+                    ),
+                    PopupMenuButton(
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: const Text('Edit'),
+                          onTap: () {},
                         ),
-                        Text(
-                          description,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: const Text('Delete'),
+                          onTap: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (context) {
+                                return ConfirmDeleteDialog(
+                                  description:
+                                      'Are you sure you want to delete this timelog for task "$task"',
+                                  onConfirm: () {
+                                    isar.deleteTimelog(id);
+
+                                    final snackBar = SnackBar(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.error,
+                                      content: const Text('Timelog deleted'),
+                                    );
+
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(snackBar);
+                                  },
+                                );
+                              },
+                            );
+                          },
                         ),
                       ],
-                    );
-                  }),
-                ],
+                    )
+                  ],
+                ),
               ),
             ),
-            PopupMenuButton(
-              itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                PopupMenuItem(
-                  value: 'edit',
-                  child: const Text('Edit'),
-                  onTap: () {},
-                ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: const Text('Delete'),
-                  onTap: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (context) {
-                        return ConfirmDeleteDialog(
-                          description:
-                              'Are you sure you want to delete this timelog for task "$task"',
-                          onConfirm: () {
-                            isar.deleteTimelog(id);
-
-                            final snackBar = SnackBar(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                              content: const Text('Timelog deleted'),
-                            );
-
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(snackBar);
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            )
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

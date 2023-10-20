@@ -37,3 +37,16 @@ String millisecondsToReadable(int milliseconds) {
 
   return trim.isNotEmpty ? trim : "No time spent";
 }
+
+/// Convert millisecond epoc time to 12-hour string like "4:45 PM"
+String millisecondsToTime(int timestamp) {
+  final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+  final hour = dateTime.hour;
+  final minute = dateTime.minute;
+  final period = hour < 12 ? 'AM' : 'PM';
+
+  // Convert to 12-hour format
+  final formattedHour = hour % 12 == 0 ? 12 : hour % 12;
+
+  return '$formattedHour:${minute.toString().padLeft(2, '0')} $period';
+}
