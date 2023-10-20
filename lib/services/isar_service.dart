@@ -47,6 +47,26 @@ class IsarService {
     return null;
   }
 
+  Stream<List<Timelog>> getTimelogStream() async* {
+    final isar = await db;
+    yield* isar.timelogs.where().watch(fireImmediately: true);
+  }
+
+  Stream<List<Timelog>> getTaskTimelogStream(Id id) async* {
+    final isar = await db;
+    var query = isar.timelogs.filter().task((q) => q.idEqualTo(id)).build();
+    yield* query.watch(fireImmediately: true);
+  }
+
+  Stream<List<Timelog>> getTagTimelogStream(Id id) async* {
+    final isar = await db;
+    var query = isar.timelogs
+        .filter()
+        .task((q) => q.tags((q) => q.idEqualTo(id)))
+        .build();
+    yield* query.watch(fireImmediately: true);
+  }
+
   Future<void> updateTimelog(Timelog timelog) async {
     final isar = await db;
 

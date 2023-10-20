@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/models/tag.dart';
+import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/popups/create_tag.dart';
+import 'package:timebrew/utils.dart';
 
 class Tags extends StatefulWidget {
   const Tags({super.key});
@@ -31,12 +33,23 @@ class _TagsState extends State<Tags> with AutomaticKeepAliveClientMixin {
           itemCount: snapshot.data!.length,
           itemBuilder: (BuildContext context, int index) {
             Tag tag = snapshot.data![index];
-            return TagEntry(
-              name: tag.name,
-              id: tag.id,
-              milliseconds: 0,
-              color: HexColor.fromHex(tag.color),
-            );
+            return StreamBuilder<List<Timelog>>(
+                initialData: const [],
+                stream: isar.getTagTimelogStream(tag.id),
+                builder: (context, snapshot) {
+                  int milliseconds = 0;
+                  if (snapshot.data!.isNotEmpty) {
+                    milliseconds = snapshot.data!
+                        .map((timelog) => timelog.endTime - timelog.startTime)
+                        .reduce((value, element) => value + element);
+                  }
+                  return TagEntry(
+                    name: tag.name,
+                    id: tag.id,
+                    milliseconds: milliseconds,
+                    color: HexColor.fromHex(tag.color),
+                  );
+                });
           },
         );
       },
@@ -76,7 +89,7 @@ class TagEntry extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
-                  "No time spent",
+                  millisecondsToReadable(milliseconds),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

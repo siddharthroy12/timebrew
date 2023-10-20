@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:timebrew/tabs/tasks.dart';
+import 'package:timebrew/tabs/timelogs.dart';
 import 'timer.dart';
 import '../popups/create_tag.dart';
 import '../popups/create_task.dart';
@@ -156,7 +157,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
           controller: _tabController,
           children: const [
             Timer(),
-            Tab(icon: Icon(Icons.history_rounded)),
+            Timelogs(),
             Tasks(),
             Tags(),
             Tab(icon: Icon(Icons.analytics_rounded)),

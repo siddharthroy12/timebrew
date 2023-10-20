@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/models/task.dart';
+import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/utils.dart';
 
 class Tasks extends StatefulWidget {
   const Tasks({super.key});
@@ -32,11 +34,23 @@ class _TasksState extends State<Tasks> with AutomaticKeepAliveClientMixin {
           itemCount: snapshot.data!.length,
           itemBuilder: (BuildContext context, int index) {
             Task task = snapshot.data![index];
-            return TaskEntry(
-              name: task.name,
-              id: task.id,
-              milliseconds: 0,
-              tags: task.tags.toList(),
+            return StreamBuilder<List<Timelog>>(
+              initialData: const [],
+              stream: isar.getTaskTimelogStream(task.id),
+              builder: (context, snapshot) {
+                int milliseconds = 0;
+                if (snapshot.data!.isNotEmpty) {
+                  milliseconds = snapshot.data!
+                      .map((timelog) => timelog.endTime - timelog.startTime)
+                      .reduce((value, element) => value + element);
+                }
+                return TaskEntry(
+                  name: task.name,
+                  id: task.id,
+                  milliseconds: milliseconds,
+                  tags: task.tags.toList(),
+                );
+              },
             );
           },
         );
@@ -70,6 +84,7 @@ class TaskEntry extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
                     children: [
@@ -81,14 +96,19 @@ class TaskEntry extends StatelessWidget {
                         width: 10,
                       ),
                       Text(
-                        "No time spent",
+                        millisecondsToReadable(milliseconds),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
+                  Builder(builder: (context) {
+                    if (tags.isEmpty) {
+                      return Container();
+                    }
+                    return const SizedBox(
+                      height: 10,
+                    );
+                  }),
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
