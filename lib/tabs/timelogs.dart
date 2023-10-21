@@ -5,7 +5,7 @@ import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
-import 'package:grouped_list/grouped_list.dart';
+import '../widgets/grouped_list.dart';
 import 'package:timebrew/utils.dart';
 
 class Timelogs extends StatefulWidget {
@@ -36,17 +36,36 @@ class _TimelogsState extends State<Timelogs>
           groupBy: (element) =>
               DateTime.fromMillisecondsSinceEpoch(element.startTime)
                   .toDateString(),
-          groupSeparatorBuilder: (String groupByValue) => Container(
-            color: Theme.of(context).colorScheme.background,
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Text(
-                groupByValue,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          groupHeaderBuilder: (List<Timelog> timelogs) {
+            var date =
+                DateTime.fromMillisecondsSinceEpoch(timelogs.first.startTime)
+                    .toDateString();
+
+            var totalMilliseconds = timelogs
+                .map((timelog) => timelog.endTime - timelog.startTime)
+                .reduce((value, element) => value + element);
+
+            var totalTime = millisecondsToReadable(totalMilliseconds);
+            return Container(
+              color: Theme.of(context).colorScheme.background,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      date,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Text(
+                      totalTime,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
           itemBuilder: (context, element) => TimelogEntry(
             id: element.id,
             task: (element.task.value?.name ?? ''),

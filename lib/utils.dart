@@ -29,9 +29,6 @@ String millisecondsToReadable(int milliseconds) {
   if (minutes > 0) {
     result += "$minutes minute ";
   }
-  if (seconds > 0) {
-    result += "$seconds seconds";
-  }
 
   final trim = result.trim();
 
