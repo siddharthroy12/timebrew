@@ -507,21 +507,20 @@ class _GroupedListViewState<T, E> extends State<GroupedListView<T, E>> {
   ///  Otherwise an empty [Widget] in form of [SizedBox.shrink] is returned.
   Widget _showFixedGroupHeader(int topElementIndex) {
     _groupHeaderKey = GlobalKey();
+    var endIndex = topElementIndex;
+    while (endIndex < _sortedElements.length &&
+        widget.groupBy(_sortedElements[endIndex]) ==
+            widget.groupBy(_sortedElements[topElementIndex])) {
+      endIndex++;
+    }
     if (widget.useStickyGroupSeparators && _sortedElements.isNotEmpty) {
-      T topElement;
-
-      try {
-        topElement = _sortedElements[topElementIndex];
-      } on RangeError catch (_) {
-        topElement = _sortedElements[0];
-      }
-
       return Container(
         key: _groupHeaderKey,
         color:
             widget.floatingHeader ? null : widget.stickyHeaderBackgroundColor,
         width: widget.floatingHeader ? null : MediaQuery.of(context).size.width,
-        child: _buildFixedGroupHeader([topElement]),
+        child: _buildFixedGroupHeader(
+            _sortedElements.sublist(topElementIndex, endIndex)),
       );
     }
     return const SizedBox.shrink();
