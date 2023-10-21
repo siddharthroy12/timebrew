@@ -41,9 +41,13 @@ class _TimelogsState extends State<Timelogs>
                 DateTime.fromMillisecondsSinceEpoch(timelogs.first.startTime)
                     .toDateString();
 
-            var totalMilliseconds = timelogs
-                .map((timelog) => timelog.endTime - timelog.startTime)
-                .reduce((value, element) => value + element);
+            var totalMilliseconds = 0;
+
+            if (timelogs.isNotEmpty) {
+              totalMilliseconds = timelogs
+                  .map((timelog) => timelog.endTime - timelog.startTime)
+                  .reduce((value, element) => value + element);
+            }
 
             var totalTime = millisecondsToReadable(totalMilliseconds);
             return Container(

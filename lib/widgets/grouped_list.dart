@@ -323,9 +323,9 @@ class _GroupedListViewState<T, E> extends State<GroupedListView<T, E>> {
       var actualIndex = index ~/ 2;
       if (index == hiddenIndex) {
         var endIndex = actualIndex;
-        while (widget.groupBy(_sortedElements[endIndex]) ==
-                widget.groupBy(_sortedElements[actualIndex]) &&
-            endIndex < _sortedElements.length - 2) {
+        while (endIndex < _sortedElements.length &&
+            widget.groupBy(_sortedElements[endIndex]) ==
+                widget.groupBy(_sortedElements[actualIndex])) {
           endIndex++;
         }
         return Opacity(
@@ -340,9 +340,9 @@ class _GroupedListViewState<T, E> extends State<GroupedListView<T, E>> {
             .groupBy(_sortedElements[actualIndex + (widget.reverse ? 1 : -1)]);
         if (prev != curr) {
           var endIndex = actualIndex;
-          while (widget.groupBy(_sortedElements[endIndex]) ==
-                  widget.groupBy(_sortedElements[actualIndex]) &&
-              endIndex < _sortedElements.length - 2) {
+          while (endIndex < _sortedElements.length &&
+              widget.groupBy(_sortedElements[endIndex]) ==
+                  widget.groupBy(_sortedElements[actualIndex])) {
             endIndex++;
           }
           return _buildGroupSeparator(
