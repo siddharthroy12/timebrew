@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/date_time.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
+import 'package:timebrew/popups/create_timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:timebrew/utils.dart';
@@ -92,12 +93,12 @@ class TimelogEntry extends StatelessWidget {
           width: 80,
           child: Column(
             children: [
-              Text(millisecondsToTime(startTime)),
+              Text(millisecondsToTime(endTime)),
               const SizedBox(
                 height: 35,
                 child: VerticalDivider(),
               ),
-              Text(millisecondsToTime(endTime)),
+              Text(millisecondsToTime(startTime)),
             ],
           ),
         ),
@@ -155,7 +156,16 @@ class TimelogEntry extends StatelessWidget {
                         PopupMenuItem(
                           value: 'edit',
                           child: const Text('Edit'),
-                          onTap: () {},
+                          onTap: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (context) {
+                                return CreateTimelogDialog(
+                                  id: id,
+                                );
+                              },
+                            );
+                          },
                         ),
                         PopupMenuItem(
                           value: 'delete',

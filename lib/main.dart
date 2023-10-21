@@ -9,7 +9,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return DynamicColorBuilder(
@@ -22,6 +21,20 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             visualDensity: VisualDensity.compact,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            timePickerTheme: const TimePickerThemeData(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(5),
+                ),
+              ),
+            ),
+            datePickerTheme: const DatePickerThemeData(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(5),
+                ),
+              ),
+            ),
             dialogTheme: const DialogTheme(
               actionsPadding: EdgeInsets.only(
                 bottom: 10,

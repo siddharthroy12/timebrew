@@ -61,8 +61,14 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
 
   void startTracking() async {
     if (_selectedTask != null) {
+      var now = DateTime.now().millisecondsSinceEpoch;
       Timelog? timelog = await _isar.addTimelog(
-          _selectedTask!, descriptionEditorController.text);
+        _selectedTask!,
+        descriptionEditorController.text,
+        now,
+        now,
+        true,
+      );
       if (timelog != null) {
         setState(() {
           _trackingTimelog = timelog;
@@ -135,62 +141,66 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   constraints: const BoxConstraints(maxWidth: 500),
-                  child: LayoutBuilder(builder: (context, constraints) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextField(
-                          enabled: !running,
-                          controller: descriptionEditorController,
-                          cursorHeight: 20,
-                          style: const TextStyle(height: 1.2),
-                          decoration: const InputDecoration(
-                            labelText: 'Task Description',
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        StreamBuilder<List<Task>>(
-                          initialData: const [],
-                          stream: _isar.getTaskStream(),
-                          builder: (context, tasks) {
-                            List<DropdownMenuEntry> dropdownMenuEntries = [];
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          StreamBuilder<List<Task>>(
+                            initialData: const [],
+                            stream: _isar.getTaskStream(),
+                            builder: (context, tasks) {
+                              List<DropdownMenuEntry> dropdownMenuEntries = [];
 
-                            for (var task in tasks.data!) {
-                              dropdownMenuEntries.add(
-                                DropdownMenuEntry(
-                                  value: task.id,
-                                  label: task.name,
-                                  style: ButtonStyle(
-                                    padding: MaterialStateProperty.resolveWith(
-                                      (states) => const EdgeInsets.symmetric(
-                                        horizontal: 40,
-                                        vertical: 10,
+                              for (var task in tasks.data!) {
+                                dropdownMenuEntries.add(
+                                  DropdownMenuEntry(
+                                    value: task.id,
+                                    label: task.name,
+                                    style: ButtonStyle(
+                                      padding:
+                                          MaterialStateProperty.resolveWith(
+                                        (states) => const EdgeInsets.symmetric(
+                                          horizontal: 40,
+                                          vertical: 10,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }
+                                );
+                              }
 
-                            return DropdownMenu(
-                              initialSelection: _selectedTask,
-                              width: constraints.maxWidth,
-                              enabled: !running,
-                              enableFilter: false,
-                              leadingIcon: const Icon(Icons.checklist_rounded),
-                              label: const Text('Task'),
-                              onSelected: (taskId) {
-                                setSelectedTask(taskId);
-                              },
-                              dropdownMenuEntries: dropdownMenuEntries,
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  }),
+                              return DropdownMenu(
+                                initialSelection: _selectedTask,
+                                width: constraints.maxWidth,
+                                enabled: !running,
+                                enableFilter: false,
+                                leadingIcon:
+                                    const Icon(Icons.checklist_rounded),
+                                label: const Text('Task'),
+                                onSelected: (taskId) {
+                                  setSelectedTask(taskId);
+                                },
+                                dropdownMenuEntries: dropdownMenuEntries,
+                              );
+                            },
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          TextField(
+                            enabled: !running,
+                            controller: descriptionEditorController,
+                            cursorHeight: 20,
+                            style: const TextStyle(height: 1.2),
+                            decoration: const InputDecoration(
+                              labelText: 'Task Description',
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(
                   height: 70,

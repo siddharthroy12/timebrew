@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:timebrew/popups/create_timelog.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/tabs/timelogs.dart';
@@ -12,7 +13,7 @@ class TabEntry {
   TabEntry({required this.title, required this.icon});
 }
 
-enum Dialog { tag, task }
+enum Dialog { tag, task, timelog }
 
 class Tabs extends StatefulWidget {
   const Tabs({
@@ -71,6 +72,8 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             return const CreateTagDialog();
           case Dialog.task:
             return const CreateTaskDialog();
+          case Dialog.timelog:
+            return const CreateTimelogDialog();
         }
       },
     );
@@ -178,6 +181,8 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                     case 'Tags':
                       _showAction(context, Dialog.tag);
                       break;
+                    case 'Logs':
+                      _showAction(context, Dialog.timelog);
                   }
                 },
                 label: Text(

@@ -24,18 +24,28 @@ class IsarService {
     return Future.value(Isar.getInstance());
   }
 
-  Future<Timelog?> addTimelog(Id taskId, String description) async {
+  Future<Timelog?> getTimelogById(Id timelogId) async {
+    final isar = await db;
+    return await isar.timelogs.get(timelogId);
+  }
+
+  Future<Timelog?> addTimelog(
+    Id taskId,
+    String description,
+    int startTime,
+    int endTime,
+    bool running,
+  ) async {
     final isar = await db;
     final Task? task = await isar.tasks.get(taskId);
-    int currentTimestamp = DateTime.now().millisecondsSinceEpoch;
 
     if (task != null) {
       final Timelog timelog = Timelog()
         ..task.value = task
         ..description = description
-        ..running = true
-        ..startTime = currentTimestamp
-        ..endTime = currentTimestamp;
+        ..running = running
+        ..startTime = startTime
+        ..endTime = endTime;
 
       await isar.writeTxn(() async {
         await isar.timelogs.put(timelog);
@@ -71,8 +81,8 @@ class IsarService {
     final isar = await db;
 
     await isar.writeTxn(() async {
-      await timelog.task.save();
       await isar.timelogs.put(timelog);
+      await timelog.task.save();
     });
   }
 
