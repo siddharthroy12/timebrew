@@ -508,11 +508,24 @@ class _GroupedListViewState<T, E> extends State<GroupedListView<T, E>> {
   Widget _showFixedGroupHeader(int topElementIndex) {
     _groupHeaderKey = GlobalKey();
     var endIndex = topElementIndex;
+    var startIndex = topElementIndex;
+
+    while (startIndex > 0 &&
+        widget.groupBy(_sortedElements[startIndex]) ==
+            widget.groupBy(_sortedElements[topElementIndex])) {
+      startIndex--;
+    }
+
+    if (startIndex != 0) {
+      startIndex++;
+    }
+
     while (endIndex < _sortedElements.length &&
         widget.groupBy(_sortedElements[endIndex]) ==
             widget.groupBy(_sortedElements[topElementIndex])) {
       endIndex++;
     }
+
     if (widget.useStickyGroupSeparators && _sortedElements.isNotEmpty) {
       return Container(
         key: _groupHeaderKey,
@@ -520,7 +533,7 @@ class _GroupedListViewState<T, E> extends State<GroupedListView<T, E>> {
             widget.floatingHeader ? null : widget.stickyHeaderBackgroundColor,
         width: widget.floatingHeader ? null : MediaQuery.of(context).size.width,
         child: _buildFixedGroupHeader(
-            _sortedElements.sublist(topElementIndex, endIndex)),
+            _sortedElements.sublist(startIndex, endIndex)),
       );
     }
     return const SizedBox.shrink();

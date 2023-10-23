@@ -26,66 +26,71 @@ class _TimelogsState extends State<Timelogs>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return StreamBuilder<List<Timelog>>(
-      initialData: const [],
-      stream: isar.getTimelogStream(),
-      builder: (context, snapshot) {
-        return GroupedListView<Timelog, String>(
-          padding: const EdgeInsets.all(8),
-          elements: snapshot.data ?? [],
-          groupBy: (element) =>
-              DateTime.fromMillisecondsSinceEpoch(element.startTime)
-                  .toDateString(),
-          groupHeaderBuilder: (List<Timelog> timelogs) {
-            var date =
-                DateTime.fromMillisecondsSinceEpoch(timelogs.first.startTime)
-                    .toDateString();
+    return StreamBuilder(
+        initialData: const [],
+        stream: isar.getTaskStream(),
+        builder: (context, snapshot) {
+          return StreamBuilder<List<Timelog>>(
+            initialData: const [],
+            stream: isar.getTimelogStream(),
+            builder: (context, snapshot) {
+              return GroupedListView<Timelog, String>(
+                padding: const EdgeInsets.all(8),
+                elements: snapshot.data ?? [],
+                groupBy: (element) =>
+                    DateTime.fromMillisecondsSinceEpoch(element.startTime)
+                        .toDateString(),
+                groupHeaderBuilder: (List<Timelog> timelogs) {
+                  var date = DateTime.fromMillisecondsSinceEpoch(
+                          timelogs.first.startTime)
+                      .toDateString();
 
-            var totalMilliseconds = 0;
+                  var totalMilliseconds = 0;
 
-            if (timelogs.isNotEmpty) {
-              totalMilliseconds = timelogs
-                  .map((timelog) => timelog.endTime - timelog.startTime)
-                  .reduce((value, element) => value + element);
-            }
+                  if (timelogs.isNotEmpty) {
+                    totalMilliseconds = timelogs
+                        .map((timelog) => timelog.endTime - timelog.startTime)
+                        .reduce((value, element) => value + element);
+                  }
 
-            var totalTime = millisecondsToReadable(totalMilliseconds);
-            return Container(
-              color: Theme.of(context).colorScheme.background,
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      date,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
+                  var totalTime = millisecondsToReadable(totalMilliseconds);
+                  return Container(
+                    color: Theme.of(context).colorScheme.background,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            date,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          Text(
+                            totalTime,
+                          ),
+                        ],
+                      ),
                     ),
-                    Text(
-                      totalTime,
-                    ),
-                  ],
+                  );
+                },
+                itemBuilder: (context, element) => TimelogEntry(
+                  id: element.id,
+                  task: (element.task.value?.name ?? ''),
+                  description: element.description,
+                  milliseconds: element.endTime - element.startTime,
+                  startTime: element.startTime,
+                  endTime: element.endTime,
                 ),
-              ),
-            );
-          },
-          itemBuilder: (context, element) => TimelogEntry(
-            id: element.id,
-            task: (element.task.value?.name ?? ''),
-            description: element.description,
-            milliseconds: element.endTime - element.startTime,
-            startTime: element.startTime,
-            endTime: element.endTime,
-          ),
-          itemComparator: (item1, item2) => item1.startTime.compareTo(
-            item2.startTime,
-          ), // optional
-          useStickyGroupSeparators: true, // optional
-          order: GroupedListOrder.DESC, // optional
-        );
-      },
-    );
+                itemComparator: (item1, item2) => item1.startTime.compareTo(
+                  item2.startTime,
+                ), // optional
+                useStickyGroupSeparators: true, // optional
+                order: GroupedListOrder.DESC, // optional
+              );
+            },
+          );
+        });
   }
 }
 
@@ -115,6 +120,7 @@ class TimelogEntry extends StatelessWidget {
         SizedBox(
           width: 80,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(millisecondsToTime(endTime)),
               const SizedBox(
@@ -128,11 +134,9 @@ class TimelogEntry extends StatelessWidget {
         Expanded(
           child: Card(
             child: SizedBox(
-              height: 100,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Row(
                   children: [
                     Expanded(
@@ -140,7 +144,8 @@ class TimelogEntry extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
                                 task,
@@ -155,22 +160,26 @@ class TimelogEntry extends StatelessWidget {
                               ),
                             ],
                           ),
-                          Builder(builder: (context) {
-                            if (description.isEmpty) {
-                              return Container();
-                            }
-                            return Column(
-                              children: [
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Text(
+                          Column(
+                            children: [
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Builder(builder: (context) {
+                                if (description.isEmpty) {
+                                  return const Text(
+                                    'No description',
+                                    style:
+                                        TextStyle(fontStyle: FontStyle.italic),
+                                  );
+                                }
+                                return Text(
                                   description,
                                   style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ],
-                            );
-                          }),
+                                );
+                              }),
+                            ],
+                          ),
                         ],
                       ),
                     ),

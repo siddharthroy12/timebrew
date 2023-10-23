@@ -24,32 +24,43 @@ class _TagsState extends State<Tags> with AutomaticKeepAliveClientMixin {
   Widget build(BuildContext context) {
     super.build(context);
 
-    return StreamBuilder<List<Tag>>(
-      initialData: const [],
-      stream: isar.getTagStream(),
+    return StreamBuilder(
+      stream: isar.getTaskStream(),
       builder: (context, snapshot) {
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: snapshot.data!.length,
-          itemBuilder: (BuildContext context, int index) {
-            Tag tag = snapshot.data![index];
-            return StreamBuilder<List<Timelog>>(
-                initialData: const [],
-                stream: isar.getTagTimelogStream(tag.id),
-                builder: (context, snapshot) {
-                  int milliseconds = 0;
-                  if (snapshot.data!.isNotEmpty) {
-                    milliseconds = snapshot.data!
-                        .map((timelog) => timelog.endTime - timelog.startTime)
-                        .reduce((value, element) => value + element);
-                  }
-                  return TagEntry(
-                    name: tag.name,
-                    id: tag.id,
-                    milliseconds: milliseconds,
-                    color: HexColor.fromHex(tag.color),
-                  );
-                });
+        return StreamBuilder(
+          stream: isar.getTimelogStream(),
+          builder: (context, snapshot) {
+            return StreamBuilder<List<Tag>>(
+              initialData: const [],
+              stream: isar.getTagStream(),
+              builder: (context, snapshot) {
+                return ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    Tag tag = snapshot.data![index];
+                    return StreamBuilder<List<Timelog>>(
+                        initialData: const [],
+                        stream: isar.getTagTimelogStream(tag.id),
+                        builder: (context, snapshot) {
+                          int milliseconds = 0;
+                          if (snapshot.data!.isNotEmpty) {
+                            milliseconds = snapshot.data!
+                                .map((timelog) =>
+                                    timelog.endTime - timelog.startTime)
+                                .reduce((value, element) => value + element);
+                          }
+                          return TagEntry(
+                            name: tag.name,
+                            id: tag.id,
+                            milliseconds: milliseconds,
+                            color: HexColor.fromHex(tag.color),
+                          );
+                        });
+                  },
+                );
+              },
+            );
           },
         );
       },
