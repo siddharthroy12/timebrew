@@ -165,8 +165,6 @@ class TaskEntry extends StatelessWidget {
                             isar.deleteTask(id, false);
 
                             final snackBar = SnackBar(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
                               content: Text('Task $name deleted'),
                             );
 

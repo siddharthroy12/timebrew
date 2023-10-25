@@ -212,10 +212,8 @@ class TimelogEntry extends StatelessWidget {
                                   onConfirm: () {
                                     isar.deleteTimelog(id);
 
-                                    final snackBar = SnackBar(
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.error,
-                                      content: const Text('Timelog deleted'),
+                                    const snackBar = SnackBar(
+                                      content: Text('Timelog deleted'),
                                     );
 
                                     ScaffoldMessenger.of(context)

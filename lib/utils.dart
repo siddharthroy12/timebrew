@@ -1,3 +1,6 @@
+import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/extensions/date_time.dart';
+
 /// Convert milliseconds to human readable format
 /// [milliseconds] is epoc time
 /// and this returns a string like `2 hours 34 minutes`
@@ -46,4 +49,35 @@ String millisecondsToTime(int timestamp) {
   final formattedHour = hour % 12 == 0 ? 12 : hour % 12;
 
   return '$formattedHour:${minute.toString().padLeft(2, '0')} $period';
+}
+
+/// Convert timelogs to CSV string
+Future<String> convertTimelogsToCSV() async {
+  final isar = IsarService();
+  String result = 'Date, Task, Tags, Start time, End Time, Total time';
+
+  var timelogs = await isar.getTimelogStream().first;
+  timelogs.sort((a, b) => b.startTime - a.startTime);
+
+  for (var timelog in timelogs) {
+    var task = timelog.task.value?.name ?? '';
+    var tags = '';
+    if (timelog.task.value != null) {
+      for (var tag in timelog.task.value!.tags) {
+        tags += '#${tag.name} ';
+      }
+    }
+    var date = DateTime.fromMillisecondsSinceEpoch(timelog.endTime)
+        .toDateString()
+        .replaceAll(', ', '-')
+        .replaceAll(' ', '-');
+    var startTime = millisecondsToTime(timelog.startTime);
+    var endTime = millisecondsToTime(timelog.endTime);
+    var totalTime = Duration(milliseconds: timelog.endTime - timelog.startTime)
+        .toString()
+        .split('.')[0];
+
+    result += '\n$date,$task,$tags,$startTime,$endTime,$totalTime';
+  }
+  return result;
 }

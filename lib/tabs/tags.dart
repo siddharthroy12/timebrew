@@ -134,8 +134,6 @@ class TagEntry extends StatelessWidget {
                             isar.deleteTag(id);
 
                             final snackBar = SnackBar(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
                               content: Text('Tag $name deleted'),
                             );
 

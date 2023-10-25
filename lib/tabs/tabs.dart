@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timebrew/popups/create_timelog.dart';
+import 'package:timebrew/settings.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/tabs/timelogs.dart';
@@ -128,10 +129,18 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
           title: Text(currentTitle),
           actions: [
             PopupMenuButton(
+              icon: const Icon(Icons.settings_outlined),
               itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                const PopupMenuItem(
-                  value: 'Hello',
-                  child: Text('Settings'),
+                PopupMenuItem(
+                  value: 'Settigns',
+                  child: const Text('Settings'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const Settings(),
+                      ),
+                    );
+                  },
                 ),
                 const PopupMenuItem(
                   value: 'Hello',
