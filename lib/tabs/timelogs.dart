@@ -81,6 +81,7 @@ class _TimelogsState extends State<Timelogs>
                   milliseconds: element.endTime - element.startTime,
                   startTime: element.startTime,
                   endTime: element.endTime,
+                  running: element.running,
                 ),
                 itemComparator: (item1, item2) => item1.startTime.compareTo(
                   item2.startTime,
@@ -101,11 +102,13 @@ class TimelogEntry extends StatelessWidget {
   final int startTime;
   final int endTime;
   final int milliseconds;
+  final bool running;
   final isar = IsarService();
 
   TimelogEntry({
     super.key,
     required this.id,
+    required this.running,
     required this.task,
     required this.description,
     required this.startTime,
@@ -122,7 +125,7 @@ class TimelogEntry extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(millisecondsToTime(endTime)),
+              Text(running ? 'Now' : millisecondsToTime(endTime)),
               const SizedBox(
                 height: 35,
                 child: VerticalDivider(),
@@ -154,10 +157,33 @@ class TimelogEntry extends StatelessWidget {
                               const SizedBox(
                                 width: 10,
                               ),
-                              Text(
-                                millisecondsToReadable(milliseconds),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
+                              running
+                                  ? Chip(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(50),
+                                        ),
+                                      ),
+                                      side: const BorderSide(
+                                        width: 0,
+                                        color: Colors.transparent,
+                                      ),
+                                      label: Text(
+                                        'Running',
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      millisecondsToReadable(milliseconds),
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
+                                    ),
                             ],
                           ),
                           Column(
