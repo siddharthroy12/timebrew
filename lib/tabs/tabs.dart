@@ -177,7 +177,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
         ),
         floatingActionButton: Builder(
           builder: (context) {
-            if (currentTitle != 'Timer' && currentTitle != 'Stats') {
+            if (currentTitle != 'Stats') {
               return FloatingActionButton.extended(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
@@ -185,6 +185,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                 onPressed: () {
                   switch (currentTitle) {
                     case 'Tasks':
+                    case 'Timer':
                       _showAction(context, Dialog.task);
                       break;
                     case 'Tags':
@@ -195,7 +196,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                   }
                 },
                 label: Text(
-                    'Add ${currentTitle.substring(0, currentTitle.length - 1)}'),
+                    'Add ${currentTitle == "Timer" ? "Task" : currentTitle.substring(0, currentTitle.length - 1)}'),
                 icon: const Icon(Icons.add_rounded),
               );
             }

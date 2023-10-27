@@ -162,6 +162,7 @@ class _CreateTimelogDialogState extends State<CreateTimelogDialog> {
                     return DropdownMenu(
                       initialSelection: _task?.id,
                       width: constrains.maxWidth,
+                      menuHeight: 300,
                       enableFilter: false,
                       leadingIcon: const Icon(Icons.checklist_rounded),
                       label: const Text('Task'),

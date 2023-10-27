@@ -173,6 +173,7 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                               return DropdownMenu(
                                 initialSelection: _selectedTask,
                                 width: constraints.maxWidth,
+                                menuHeight: 300,
                                 enabled: !running,
                                 enableFilter: false,
                                 leadingIcon:

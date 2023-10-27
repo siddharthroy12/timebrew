@@ -44,7 +44,10 @@ class _SettingsState extends State<Settings> {
             subtitle: const Text('As CSV'),
             onTap: () async {
               final csvString = await convertTimelogsToCSV();
-              final downloadDirectory = await getDownloadsDirectory();
+              Directory? downloadDirectory = await getDownloadsDirectory();
+              if (Platform.isAndroid) {
+                downloadDirectory = Directory('/storage/emulated/0/Download');
+              }
               final csvFile = File('${downloadDirectory?.path}/timelogs.csv');
               csvFile.writeAsString(csvString);
               const snackBar = SnackBar(
