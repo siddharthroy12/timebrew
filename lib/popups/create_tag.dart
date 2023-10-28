@@ -16,11 +16,15 @@ class CreateTagDialog extends StatefulWidget {
 class _CreateTagDialogState extends State<CreateTagDialog> {
   String name = "";
   List<String> options = [
+    Colors.yellowAccent.toHex(),
     Colors.orange.toHex(),
     Colors.red.toHex(),
     Colors.pink.toHex(),
+    Colors.brown.toHex(),
     Colors.green.toHex(),
-    Colors.indigo.toHex()
+    Colors.indigo.toHex(),
+    Colors.blueAccent.toHex(),
+    Colors.tealAccent.toHex(),
   ];
   late String color;
   final isar = IsarService();
@@ -50,18 +54,38 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
   List<Widget> _buidColorOptions() {
     final widgets = <Widget>[];
     for (String option in options) {
-      widgets.add(Radio<String>(
-        value: option,
-        groupValue: color,
-        onChanged: (String? value) {
-          setState(() {
-            color = value ?? '#ffffff';
-          });
-        },
-        fillColor: MaterialStateProperty.resolveWith<Color>(
-            (Set<MaterialState> states) {
-          return HexColor.fromHex(option);
-        }),
+      widgets.add(Padding(
+        padding: const EdgeInsets.all(1.0),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(50),
+          onTap: () {
+            setState(() {
+              color = option;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(color == option ? 50 : 5),
+              color: HexColor.fromHex(option),
+            ),
+            child: SizedBox(
+              width: 50,
+              height: 50,
+              child: Center(
+                child: color == option
+                    ? Icon(
+                        Icons.check,
+                        color:
+                            HexColor.fromHex(option).computeLuminance() >= 0.5
+                                ? Colors.black
+                                : Colors.white,
+                      )
+                    : null,
+              ),
+            ),
+          ),
+        ),
       ));
     }
     return widgets;
@@ -84,39 +108,42 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(
-            height: 10,
-          ),
-          Text(
-            widget.id == null ? 'Create Tag' : 'Update Tag',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(
-            height: 20,
-          ),
-          TextField(
-            controller: textFieldController,
-            cursorHeight: 20,
-            style: const TextStyle(height: 1.2),
-            decoration: const InputDecoration(label: Text('Tag name')),
-            onChanged: (String value) {
-              setState(() {
-                name = value;
-              });
-            },
-          ),
-          const SizedBox(
-            height: 20,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: _buidColorOptions(),
-          )
-        ],
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(
+              height: 10,
+            ),
+            Text(
+              widget.id == null ? 'Create Tag' : 'Update Tag',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            TextField(
+              controller: textFieldController,
+              cursorHeight: 20,
+              style: const TextStyle(height: 1.2),
+              decoration: const InputDecoration(label: Text('Tag name')),
+              onChanged: (String value) {
+                setState(() {
+                  name = value;
+                });
+              },
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            Wrap(
+              direction: Axis.horizontal,
+              children: _buidColorOptions(),
+            )
+          ],
+        ),
       ),
       actions: [
         TextButton(

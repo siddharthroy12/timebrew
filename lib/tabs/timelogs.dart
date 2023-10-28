@@ -27,71 +27,72 @@ class _TimelogsState extends State<Timelogs>
     super.build(context);
 
     return StreamBuilder(
-        initialData: const [],
-        stream: isar.getTaskStream(),
-        builder: (context, snapshot) {
-          return StreamBuilder<List<Timelog>>(
-            initialData: const [],
-            stream: isar.getTimelogStream(),
-            builder: (context, snapshot) {
-              return GroupedListView<Timelog, String>(
-                padding: const EdgeInsets.all(8),
-                elements: snapshot.data ?? [],
-                groupBy: (element) =>
-                    DateTime.fromMillisecondsSinceEpoch(element.startTime)
-                        .toDateString(),
-                groupHeaderBuilder: (List<Timelog> timelogs) {
-                  var date = DateTime.fromMillisecondsSinceEpoch(
-                          timelogs.first.startTime)
-                      .toDateString();
+      initialData: const [],
+      stream: isar.getTaskStream(),
+      builder: (context, snapshot) {
+        return StreamBuilder<List<Timelog>>(
+          initialData: const [],
+          stream: isar.getTimelogStream(),
+          builder: (context, snapshot) {
+            return GroupedListView<Timelog, String>(
+              padding: const EdgeInsets.all(8),
+              elements: snapshot.data ?? [],
+              groupBy: (element) =>
+                  DateTime.fromMillisecondsSinceEpoch(element.startTime)
+                      .toDateString(),
+              groupHeaderBuilder: (List<Timelog> timelogs) {
+                var date = DateTime.fromMillisecondsSinceEpoch(
+                        timelogs.first.startTime)
+                    .toDateString();
 
-                  var totalMilliseconds = 0;
+                var totalMilliseconds = 0;
 
-                  if (timelogs.isNotEmpty) {
-                    totalMilliseconds = timelogs
-                        .map((timelog) => timelog.endTime - timelog.startTime)
-                        .reduce((value, element) => value + element);
-                  }
+                if (timelogs.isNotEmpty) {
+                  totalMilliseconds = timelogs
+                      .map((timelog) => timelog.endTime - timelog.startTime)
+                      .reduce((value, element) => value + element);
+                }
 
-                  var totalTime = millisecondsToReadable(totalMilliseconds);
-                  return Container(
-                    color: Theme.of(context).colorScheme.background,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            date,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          Text(
-                            totalTime,
-                          ),
-                        ],
-                      ),
+                var totalTime = millisecondsToReadable(totalMilliseconds);
+                return Container(
+                  color: Theme.of(context).colorScheme.background,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          date,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        Text(
+                          totalTime,
+                        ),
+                      ],
                     ),
-                  );
-                },
-                itemBuilder: (context, element) => TimelogEntry(
-                  id: element.id,
-                  task: (element.task.value?.name ?? ''),
-                  description: element.description,
-                  milliseconds: element.endTime - element.startTime,
-                  startTime: element.startTime,
-                  endTime: element.endTime,
-                  running: element.running,
-                ),
-                itemComparator: (item1, item2) => item1.startTime.compareTo(
-                  item2.startTime,
-                ), // optional
-                useStickyGroupSeparators: true, // optional
-                order: GroupedListOrder.DESC, // optional
-              );
-            },
-          );
-        });
+                  ),
+                );
+              },
+              itemBuilder: (context, element) => TimelogEntry(
+                id: element.id,
+                task: (element.task.value?.name ?? ''),
+                description: element.description,
+                milliseconds: element.endTime - element.startTime,
+                startTime: element.startTime,
+                endTime: element.endTime,
+                running: element.running,
+              ),
+              itemComparator: (item1, item2) => item1.startTime.compareTo(
+                item2.startTime,
+              ), // optional
+              useStickyGroupSeparators: true, // optional
+              order: GroupedListOrder.DESC, // optional
+            );
+          },
+        );
+      },
+    );
   }
 }
 

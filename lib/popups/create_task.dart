@@ -83,67 +83,67 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
               height: 20,
             ),
             StreamBuilder(
-                stream: isar.getTagStream(),
-                initialData: const [],
-                builder: (context, snapshot) {
-                  List<Widget> chips = [];
-                  for (Tag tag in snapshot.data!) {
-                    bool selected = selectedTags.contains(tag.id);
-                    chips.add(
-                      FilterChip(
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(50),
-                          ),
-                        ),
-                        color: MaterialStateProperty.resolveWith((states) {
-                          return HexColor.fromHex(tag.color);
-                        }),
-                        side: const BorderSide(
-                            width: 0, color: Colors.transparent),
-                        selected: selected,
-                        onSelected: (newSelected) {
-                          setState(() {
-                            if (selected) {
-                              selectedTags.remove(tag.id);
-                            } else {
-                              selectedTags.add(tag.id);
-                            }
-                          });
-                        },
-                        label: Text('#${tag.name}'),
-                      ),
-                    );
-                  }
+              stream: isar.getTagStream(),
+              initialData: const [],
+              builder: (context, snapshot) {
+                List<Widget> chips = [];
+                for (Tag tag in snapshot.data!) {
+                  bool selected = selectedTags.contains(tag.id);
                   chips.add(
-                    ActionChip(
+                    FilterChip(
                       shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(
                           Radius.circular(50),
                         ),
                       ),
                       color: MaterialStateProperty.resolveWith((states) {
-                        return Theme.of(context).colorScheme.onSecondary;
+                        return HexColor.fromHex(tag.color);
                       }),
-                      label: const Text('Add tag'),
-                      avatar: const Icon(Icons.add),
-                      onPressed: () {
-                        showDialog<void>(
-                          context: context,
-                          builder: (context) {
-                            return const CreateTagDialog();
-                          },
-                        );
+                      side:
+                          const BorderSide(width: 0, color: Colors.transparent),
+                      selected: selected,
+                      onSelected: (newSelected) {
+                        setState(() {
+                          if (selected) {
+                            selectedTags.remove(tag.id);
+                          } else {
+                            selectedTags.add(tag.id);
+                          }
+                        });
                       },
+                      label: Text('#${tag.name}'),
                     ),
                   );
-
-                  return Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: chips,
-                  );
-                }),
+                }
+                chips.add(
+                  ActionChip(
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(50),
+                      ),
+                    ),
+                    color: MaterialStateProperty.resolveWith((states) {
+                      return Theme.of(context).colorScheme.onSecondary;
+                    }),
+                    label: const Text('Add tag'),
+                    avatar: const Icon(Icons.add),
+                    onPressed: () {
+                      showDialog<void>(
+                        context: context,
+                        builder: (context) {
+                          return const CreateTagDialog();
+                        },
+                      );
+                    },
+                  ),
+                );
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: chips,
+                );
+              },
+            ),
           ],
         ),
       ),
