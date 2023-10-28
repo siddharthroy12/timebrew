@@ -97,11 +97,19 @@ class TagEntry extends StatelessWidget {
               children: [
                 Text(
                   '#$name',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: color.computeLuminance() >= 0.5
+                            ? Colors.black
+                            : Colors.white,
+                      ),
                 ),
                 Text(
                   millisecondsToReadable(milliseconds),
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: color.computeLuminance() >= 0.5
+                            ? Colors.black
+                            : Colors.white,
+                      ),
                 ),
               ],
             ),

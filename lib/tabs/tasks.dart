@@ -128,7 +128,16 @@ class TaskEntry extends StatelessWidget {
                               width: 0,
                               color: Colors.transparent,
                             ),
-                            label: Text('#${tag.name}'),
+                            label: Text(
+                              '#${tag.name}',
+                              style: TextStyle(
+                                color: HexColor.fromHex(tag.color)
+                                            .computeLuminance() >=
+                                        0.5
+                                    ? Colors.black
+                                    : Colors.white,
+                              ),
+                            ),
                           ),
                         )
                         .toList(),

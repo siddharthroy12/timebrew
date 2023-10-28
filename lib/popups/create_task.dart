@@ -111,7 +111,16 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
                           }
                         });
                       },
-                      label: Text('#${tag.name}'),
+                      label: Text(
+                        '#${tag.name}',
+                        style: TextStyle(
+                          color:
+                              HexColor.fromHex(tag.color).computeLuminance() >=
+                                      0.5
+                                  ? Colors.black
+                                  : Colors.white,
+                        ),
+                      ),
                     ),
                   );
                 }
