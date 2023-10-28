@@ -118,7 +118,7 @@ class TaskEntry extends StatelessWidget {
                             onPressed: () {},
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.all(
-                                Radius.circular(5),
+                                Radius.circular(50),
                               ),
                             ),
                             color: MaterialStateProperty.resolveWith((states) {

@@ -103,11 +103,12 @@ class _CreateTimelogDialogState extends State<CreateTimelogDialog> {
       setState(() {
         _endTime = DateTime.fromMillisecondsSinceEpoch(_endTime)
             .copyWith(
-                hour: timeOfDay.hour,
-                minute: timeOfDay.minute,
-                second: 0,
-                millisecond: 0,
-                microsecond: 0)
+              hour: timeOfDay.hour,
+              minute: timeOfDay.minute,
+              second: 0,
+              millisecond: 0,
+              microsecond: 0,
+            )
             .millisecondsSinceEpoch;
       });
     }

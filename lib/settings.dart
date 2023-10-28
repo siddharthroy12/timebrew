@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:timebrew/services/isar_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import './utils.dart';
 
@@ -13,6 +15,8 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
+  final isar = IsarService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,33 +47,83 @@ class _SettingsState extends State<Settings> {
             title: const Text('Export timelogs'),
             subtitle: const Text('As CSV'),
             onTap: () async {
-              final csvString = await convertTimelogsToCSV();
-              Directory? downloadDirectory = await getDownloadsDirectory();
-              if (Platform.isAndroid) {
-                downloadDirectory = Directory('/storage/emulated/0/Download');
+              String? selectedDirectory =
+                  await FilePicker.platform.getDirectoryPath();
+
+              if (selectedDirectory != null) {
+                final csvString = await convertTimelogsToCSV();
+
+                final csvFile = File('$selectedDirectory/timelogs.csv');
+                await csvFile.writeAsString(csvString);
+                var snackBar = SnackBar(
+                  content: Text(
+                    'Timelogs exported to $selectedDirectory',
+                  ),
+                );
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(snackBar);
               }
-              final csvFile = File('${downloadDirectory?.path}/timelogs.csv');
-              csvFile.writeAsString(csvString);
-              const snackBar = SnackBar(
-                content: Text(
-                  'Timelogs exported to your downloads directory',
-                ),
-              );
-              // ignore: use_build_context_synchronously
-              ScaffoldMessenger.of(context).showSnackBar(snackBar);
             },
           ),
           ListTile(
             leading: const Icon(Icons.backup_rounded),
             title: const Text('Backup'),
             subtitle: const Text('Backup your data locally'),
-            onTap: () {},
+            onTap: () async {
+              String? selectedDirectory =
+                  await FilePicker.platform.getDirectoryPath();
+
+              if (selectedDirectory != null) {
+                final db = await isar.db;
+                db.copyToFile('$selectedDirectory/backuo.tb');
+              }
+            },
           ),
           ListTile(
             leading: const Icon(Icons.restore_rounded),
-            title: const Text('Backup'),
-            subtitle: const Text('Backup your data locally'),
-            onTap: () {},
+            title: const Text('Restore'),
+            subtitle: const Text('Restore your backup'),
+            onTap: () async {
+              FilePickerResult? selectedFile =
+                  await FilePicker.platform.pickFiles(
+                dialogTitle: 'Pick Timebrew backup file',
+                allowedExtensions: ['tb'],
+                type: FileType.custom,
+              );
+              if (selectedFile != null) {
+                if (selectedFile.files.single.path != null) {
+                  // ignore: use_build_context_synchronously
+                  await showDialog<void>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('Warning'),
+                        content: const Text(
+                          'You could loose data if the selected file is corrupted or invalid and you will have to restart the app to load the restored data.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () async {
+                              File file = File(selectedFile.files.single.path!);
+                              final dir =
+                                  await getApplicationDocumentsDirectory();
+                              var bytes = await file.readAsBytes();
+                              File destFile = File('${dir.path}/default.isar');
+                              File lockFile =
+                                  File('${dir.path}/default.isar.lock');
+                              lockFile.deleteSync();
+                              await destFile.writeAsBytes(bytes, flush: true);
+                              exit(0);
+                            },
+                            child: const Text('Proceed'),
+                          )
+                        ],
+                      );
+                    },
+                  );
+                }
+              }
+            },
           ),
           const Divider(
             height: 1,
@@ -92,7 +146,8 @@ class _SettingsState extends State<Settings> {
             onTap: () {
               launchUrl(
                 Uri.parse(
-                    'https://github.com/siddharthroy12/timebrew/releases'),
+                  'https://github.com/siddharthroy12/timebrew/releases',
+                ),
               );
             },
           ),
@@ -125,7 +180,7 @@ class GroupHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15),
       child: Text(
         heading,
         style: TextStyle(
