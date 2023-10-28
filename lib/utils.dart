@@ -1,5 +1,13 @@
+import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/extensions/date_time.dart';
+
+/// A pair of values.
+class Pair<E, F> {
+  E first;
+  F last;
+  Pair({required this.first, required this.last});
+}
 
 /// Convert milliseconds to human readable format
 /// [milliseconds] is epoc time
@@ -83,4 +91,150 @@ Future<String> convertTimelogsToCSV() async {
     result += '\n$date,$task,$tags,$startTime,$endTime,$totalTime';
   }
   return result;
+}
+
+double getTimelogHours(Timelog timelog) {
+  return (timelog.endTime - timelog.startTime) / 3.6e+6;
+}
+
+List<Pair<String, double>> getDailyHours(List<Timelog> timelogs) {
+  List<Pair<String, double>> result = [];
+  Map<String, double> groupByDay = {};
+
+  for (var timelog in timelogs) {
+    final dateString =
+        DateTime.fromMillisecondsSinceEpoch(timelog.startTime).toDateString();
+
+    final hours = getTimelogHours(timelog);
+
+    if (groupByDay.containsKey(dateString)) {
+      groupByDay[dateString] = groupByDay[dateString]! + hours;
+    } else {
+      groupByDay[dateString] = hours;
+    }
+  }
+
+  for (var i = 0; i < 365; i++) {
+    final dateString =
+        DateTime.now().subtract(Duration(days: i)).toDateString();
+    double hours = 0;
+    if (groupByDay.containsKey(dateString)) {
+      hours = groupByDay[dateString]!;
+    } else {
+      hours = 0;
+    }
+    result.add(Pair(first: dateString, last: hours));
+  }
+
+  return result;
+}
+
+List<Pair<String, double>> getWeeklyHours(List<Timelog> timelogs) {
+  List<Pair<String, double>> result = [];
+  Map<String, double> groupByDay = {};
+
+  for (var timelog in timelogs) {
+    var dateTime = DateTime.fromMillisecondsSinceEpoch(timelog.startTime);
+
+    String month = dateTime.toDateString().split(' ')[0];
+    String year = dateTime.year.toString().substring(2, 4);
+    int week = dateTime.weekOfMonth;
+    var key = "${week}w $month, '$year";
+
+    final hours = getTimelogHours(timelog);
+
+    if (groupByDay.containsKey(key)) {
+      groupByDay[key] = groupByDay[key]! + hours;
+    } else {
+      groupByDay[key] = hours;
+    }
+  }
+
+  for (var i = 0; i < 365; i++) {
+    final dateTime = DateTime.now().subtract(Duration(days: i));
+
+    String month = dateTime.toDateString().split(' ')[0];
+    String year = dateTime.year.toString().substring(2, 4);
+    int week = dateTime.weekOfMonth;
+
+    var key = "${week}w $month, '$year";
+    double hours = 0;
+    if (groupByDay.containsKey(key)) {
+      hours = groupByDay[key]!;
+    } else {
+      hours = 0;
+    }
+    if (result.isEmpty || result.last.first != key) {
+      result.add(Pair(first: key, last: hours));
+    }
+  }
+
+  return result;
+}
+
+List<Pair<String, double>> getMonthlyHours(List<Timelog> timelogs) {
+  List<Pair<String, double>> result = [];
+  Map<String, double> groupByDay = {};
+
+  for (var timelog in timelogs) {
+    var dateTime = DateTime.fromMillisecondsSinceEpoch(timelog.startTime);
+
+    String month = dateTime.toDateString().split(' ')[0];
+    String year = dateTime.year.toString().substring(2, 4);
+
+    var key = "$month '$year";
+
+    final hours = getTimelogHours(timelog);
+
+    if (groupByDay.containsKey(key)) {
+      groupByDay[key] = groupByDay[key]! + hours;
+    } else {
+      groupByDay[key] = hours;
+    }
+  }
+
+  for (var i = 0; i < 12 * 3; i++) {
+    final dateTime = DateTime.now().subtract(Duration(days: i * 30));
+
+    String month = dateTime.toDateString().split(' ')[0];
+    String year = dateTime.year.toString().substring(2, 4);
+
+    var key = "$month '$year";
+    double hours = 0;
+    if (groupByDay.containsKey(key)) {
+      hours = groupByDay[key]!;
+    } else {
+      hours = 0;
+    }
+    if (result.isEmpty || result.last.first != key) {
+      result.add(Pair(first: key, last: hours));
+    }
+  }
+
+  return result;
+}
+
+String formatHours(double hours) {
+  int hoursInt = hours.floor();
+  int minutes = ((hours - hoursInt) * 60).round();
+
+  String result = '$hoursInt hour';
+  if (hoursInt != 1) {
+    result += 's';
+  }
+
+  if (minutes > 0) {
+    result += ' $minutes minute';
+    if (minutes != 1) {
+      result += 's';
+    }
+  }
+
+  return result;
+}
+
+int weeksBetween(DateTime from, DateTime to) {
+  from = DateTime.utc(from.year, from.month, from.day);
+  to = DateTime.utc(to.year, to.month, to.day);
+  return (to.difference(from).inDays / 7).ceil();
 }

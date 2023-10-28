@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/gestures.dart';
 import 'tabs/tabs.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+class ThisShouldBeDefaultScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      };
 }
 
 class MyApp extends StatelessWidget {
@@ -16,6 +25,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Timebrew',
           debugShowCheckedModeBanner: false,
+          scrollBehavior: ThisShouldBeDefaultScrollBehavior(),
           theme: ThemeData(
             colorScheme: darkDynamic,
             useMaterial3: true,

@@ -43,6 +43,7 @@ dependencies:
   grouped_list: ^5.1.2
   url_launcher: ^6.2.0
   file_picker: ^6.0.0
+  fl_chart: ^0.64.0
 
 dev_dependencies:
   flutter_test:
