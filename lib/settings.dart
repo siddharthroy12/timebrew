@@ -107,12 +107,12 @@ class _SettingsState extends State<Settings> {
                               File file = File(selectedFile.files.single.path!);
                               final dir =
                                   await getApplicationDocumentsDirectory();
+                              await (await isar.db).close(deleteFromDisk: true);
                               var bytes = await file.readAsBytes();
                               File destFile = File('${dir.path}/default.isar');
-                              File lockFile =
-                                  File('${dir.path}/default.isar.lock');
-                              lockFile.deleteSync();
-                              await destFile.writeAsBytes(bytes, flush: true);
+                              await destFile.writeAsBytes(
+                                bytes,
+                              );
                               exit(0);
                             },
                             child: const Text('Proceed'),
