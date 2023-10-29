@@ -110,11 +110,12 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
 
                     return Stack(
                       alignment: AlignmentDirectional.bottomStart,
+                      clipBehavior: Clip.none,
                       children: [
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(5),
-                            color: Theme.of(context).colorScheme.inversePrimary,
+                            color: Theme.of(context).colorScheme.surfaceVariant,
                           ),
                         ),
                         FractionallySizedBox(
@@ -122,7 +123,7 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(5),
-                              color: Theme.of(context).colorScheme.secondary,
+                              color: Theme.of(context).colorScheme.surfaceTint,
                             ),
                           ),
                         ),
@@ -139,6 +140,7 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
                             child: Text(
                               '${hour.totalHours.toStringAsFixed(1)}h',
                               textAlign: TextAlign.center,
+                              overflow: TextOverflow.visible,
                             ),
                           ),
                         ),
@@ -168,6 +170,7 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
 
     isar.getTagStream().listen((event) {
       setState(() {});
+      selectedTags = event.map((e) => e.id).toList();
     });
     isar.getTaskStream().listen((event) {
       setState(() {});
