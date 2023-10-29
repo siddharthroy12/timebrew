@@ -1,3 +1,4 @@
+import 'package:isar/isar.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/extensions/date_time.dart';
@@ -7,6 +8,17 @@ class Pair<E, F> {
   E first;
   F last;
   Pair({required this.first, required this.last});
+}
+
+class MomentHours {
+  String moment;
+  double totalHours;
+  Map<Id, double> tagHours;
+  MomentHours({
+    required this.moment,
+    required this.totalHours,
+    required this.tagHours,
+  });
 }
 
 /// Convert milliseconds to human readable format
@@ -97,9 +109,9 @@ double getTimelogHours(Timelog timelog) {
   return (timelog.endTime - timelog.startTime) / 3.6e+6;
 }
 
-List<Pair<String, double>> getDailyHours(List<Timelog> timelogs) {
-  List<Pair<String, double>> result = [];
-  Map<String, double> groupByDay = {};
+List<MomentHours> getDailyHours(List<Timelog> timelogs) {
+  List<MomentHours> result = [];
+  Map<String, MomentHours> groupByDay = {};
 
   for (var timelog in timelogs) {
     final dateString =
@@ -107,31 +119,50 @@ List<Pair<String, double>> getDailyHours(List<Timelog> timelogs) {
 
     final hours = getTimelogHours(timelog);
 
+    Map<Id, double> tagHours = {};
+    for (var tag in timelog.task.value!.tags) {
+      if (tagHours.containsKey(tag.id)) {
+        tagHours[tag.id] = tagHours[tag.id]! + hours;
+      } else {
+        tagHours[tag.id] = hours;
+      }
+    }
+
     if (groupByDay.containsKey(dateString)) {
-      groupByDay[dateString] = groupByDay[dateString]! + hours;
+      groupByDay[dateString]!.totalHours += hours;
+      for (var id in tagHours.keys) {
+        if (groupByDay[dateString]!.tagHours.containsKey(id)) {
+          groupByDay[dateString]!.tagHours[id] =
+              groupByDay[dateString]!.tagHours[id]! + tagHours[id]!;
+        } else {
+          groupByDay[dateString]!.tagHours[id] = tagHours[id]!;
+        }
+      }
     } else {
-      groupByDay[dateString] = hours;
+      groupByDay[dateString] = MomentHours(
+        moment: dateString,
+        totalHours: hours,
+        tagHours: tagHours,
+      );
     }
   }
 
   for (var i = 0; i < 365; i++) {
     final dateString =
         DateTime.now().subtract(Duration(days: i)).toDateString();
-    double hours = 0;
+    var moment = MomentHours(moment: dateString, totalHours: 0, tagHours: {});
     if (groupByDay.containsKey(dateString)) {
-      hours = groupByDay[dateString]!;
-    } else {
-      hours = 0;
+      moment = groupByDay[dateString]!;
     }
-    result.add(Pair(first: dateString, last: hours));
+    result.add(moment);
   }
 
   return result;
 }
 
-List<Pair<String, double>> getWeeklyHours(List<Timelog> timelogs) {
-  List<Pair<String, double>> result = [];
-  Map<String, double> groupByDay = {};
+List<MomentHours> getWeeklyHours(List<Timelog> timelogs) {
+  List<MomentHours> result = [];
+  Map<String, MomentHours> groupByDay = {};
 
   for (var timelog in timelogs) {
     var dateTime = DateTime.fromMillisecondsSinceEpoch(timelog.startTime);
@@ -143,10 +174,31 @@ List<Pair<String, double>> getWeeklyHours(List<Timelog> timelogs) {
 
     final hours = getTimelogHours(timelog);
 
+    Map<Id, double> tagHours = {};
+    for (var tag in timelog.task.value!.tags) {
+      if (tagHours.containsKey(tag.id)) {
+        tagHours[tag.id] = tagHours[tag.id]! + hours;
+      } else {
+        tagHours[tag.id] = hours;
+      }
+    }
+
     if (groupByDay.containsKey(key)) {
-      groupByDay[key] = groupByDay[key]! + hours;
+      groupByDay[key]!.totalHours += hours;
+      for (var id in tagHours.keys) {
+        if (groupByDay[key]!.tagHours.containsKey(id)) {
+          groupByDay[key]!.tagHours[id] =
+              groupByDay[key]!.tagHours[id]! + tagHours[id]!;
+        } else {
+          groupByDay[key]!.tagHours[id] = tagHours[id]!;
+        }
+      }
     } else {
-      groupByDay[key] = hours;
+      groupByDay[key] = MomentHours(
+        moment: key,
+        totalHours: hours,
+        tagHours: tagHours,
+      );
     }
   }
 
@@ -158,23 +210,21 @@ List<Pair<String, double>> getWeeklyHours(List<Timelog> timelogs) {
     int week = dateTime.weekOfMonth;
 
     var key = "${week}w $month, '$year";
-    double hours = 0;
+    var moment = MomentHours(moment: key, totalHours: 0, tagHours: {});
     if (groupByDay.containsKey(key)) {
-      hours = groupByDay[key]!;
-    } else {
-      hours = 0;
+      moment = groupByDay[key]!;
     }
-    if (result.isEmpty || result.last.first != key) {
-      result.add(Pair(first: key, last: hours));
+    if (result.isEmpty || result.last.moment != key) {
+      result.add(moment);
     }
   }
 
   return result;
 }
 
-List<Pair<String, double>> getMonthlyHours(List<Timelog> timelogs) {
-  List<Pair<String, double>> result = [];
-  Map<String, double> groupByDay = {};
+List<MomentHours> getMonthlyHours(List<Timelog> timelogs) {
+  List<MomentHours> result = [];
+  Map<String, MomentHours> groupByDay = {};
 
   for (var timelog in timelogs) {
     var dateTime = DateTime.fromMillisecondsSinceEpoch(timelog.startTime);
@@ -186,10 +236,31 @@ List<Pair<String, double>> getMonthlyHours(List<Timelog> timelogs) {
 
     final hours = getTimelogHours(timelog);
 
+    Map<Id, double> tagHours = {};
+    for (var tag in timelog.task.value!.tags) {
+      if (tagHours.containsKey(tag.id)) {
+        tagHours[tag.id] = tagHours[tag.id]! + hours;
+      } else {
+        tagHours[tag.id] = hours;
+      }
+    }
+
     if (groupByDay.containsKey(key)) {
-      groupByDay[key] = groupByDay[key]! + hours;
+      groupByDay[key]!.totalHours += hours;
+      for (var id in tagHours.keys) {
+        if (groupByDay[key]!.tagHours.containsKey(id)) {
+          groupByDay[key]!.tagHours[id] =
+              groupByDay[key]!.tagHours[id]! + tagHours[id]!;
+        } else {
+          groupByDay[key]!.tagHours[id] = tagHours[id]!;
+        }
+      }
     } else {
-      groupByDay[key] = hours;
+      groupByDay[key] = MomentHours(
+        moment: key,
+        totalHours: hours,
+        tagHours: tagHours,
+      );
     }
   }
 
@@ -200,14 +271,12 @@ List<Pair<String, double>> getMonthlyHours(List<Timelog> timelogs) {
     String year = dateTime.year.toString().substring(2, 4);
 
     var key = "$month '$year";
-    double hours = 0;
+    var moment = MomentHours(moment: key, totalHours: 0, tagHours: {});
     if (groupByDay.containsKey(key)) {
-      hours = groupByDay[key]!;
-    } else {
-      hours = 0;
+      moment = groupByDay[key]!;
     }
-    if (result.isEmpty || result.last.first != key) {
-      result.add(Pair(first: key, last: hours));
+    if (result.isEmpty || result.last.moment != key) {
+      result.add(moment);
     }
   }
 
