@@ -33,7 +33,8 @@ class _SettingsState extends State<Settings> {
             title: const Text('Export timelogs'),
             subtitle: const Text('As CSV'),
             onTap: () async {
-              bool hasPermission = false;
+              bool hasPermission = true;
+
               if (Platform.isAndroid) {
                 hasPermission =
                     await Permission.manageExternalStorage.request().isGranted;
@@ -65,7 +66,8 @@ class _SettingsState extends State<Settings> {
             title: const Text('Backup'),
             subtitle: const Text('Backup your data locally'),
             onTap: () async {
-              bool hasPermission = false;
+              bool hasPermission = true;
+
               if (Platform.isAndroid) {
                 hasPermission =
                     await Permission.manageExternalStorage.request().isGranted;
