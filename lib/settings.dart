@@ -39,13 +39,14 @@ class _SettingsState extends State<Settings> {
 
                 final csvFile = File('$selectedDirectory/timelogs.csv');
                 await csvFile.writeAsString(csvString);
-                var snackBar = SnackBar(
-                  content: Text(
-                    'Timelogs exported to $selectedDirectory',
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Timelogs exported to $selectedDirectory/timelogs.csv',
+                    ),
                   ),
                 );
-                // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
               }
             },
           ),
@@ -59,7 +60,19 @@ class _SettingsState extends State<Settings> {
 
               if (selectedDirectory != null) {
                 final db = await isar.db;
-                db.copyToFile('$selectedDirectory/backuo.tb');
+                File file = File('$selectedDirectory/backup.tb');
+                if (file.existsSync()) {
+                  file.deleteSync();
+                }
+                await db.copyToFile('$selectedDirectory/backup.tb');
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Backup has been made to $selectedDirectory/backup.tb',
+                    ),
+                  ),
+                );
               }
             },
           ),
@@ -93,7 +106,7 @@ class _SettingsState extends State<Settings> {
                                   await getApplicationDocumentsDirectory();
                               await (await isar.db).close(deleteFromDisk: true);
                               var bytes = await file.readAsBytes();
-                              File destFile = File('${dir.path}/default.isar');
+                              File destFile = File('${dir.path}/timebrew.isar');
                               await destFile.writeAsBytes(
                                 bytes,
                               );
