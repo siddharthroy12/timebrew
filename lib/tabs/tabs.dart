@@ -129,29 +129,15 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
         appBar: AppBar(
           title: Text(currentTitle),
           actions: [
-            PopupMenuButton(
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const Settings(),
+                  ),
+                );
+              },
               icon: const Icon(Icons.settings_outlined),
-              itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                PopupMenuItem(
-                  value: 'Settigns',
-                  child: const Text('Settings'),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const Settings(),
-                      ),
-                    );
-                  },
-                ),
-                const PopupMenuItem(
-                  value: 'Hello',
-                  child: Text('Send feedback'),
-                ),
-                const PopupMenuItem(
-                  value: 'Hello',
-                  child: Text('Help'),
-                ),
-              ],
             )
           ],
           bottom: PreferredSize(

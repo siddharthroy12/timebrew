@@ -25,22 +25,6 @@ class _SettingsState extends State<Settings> {
       ),
       body: ListView(
         children: [
-          const GroupHeading(heading: 'Appearance'),
-          ListTile(
-            leading: const Icon(Icons.color_lens_rounded),
-            title: const Text('Accent Color'),
-            subtitle: const Text('System'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.dashboard_rounded),
-            title: const Text('UI Style'),
-            subtitle: const Text('Material You'),
-            onTap: () {},
-          ),
-          const Divider(
-            height: 1,
-          ),
           const GroupHeading(heading: 'Data'),
           ListTile(
             leading: const Icon(Icons.download_rounded),

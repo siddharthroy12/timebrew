@@ -12,12 +12,14 @@ class IsarService {
   }
 
   Future<Isar> openDB() async {
+    
     final dir = await getApplicationDocumentsDirectory();
 
     if (Isar.instanceNames.isEmpty) {
       return await Isar.open(
         [TimelogSchema, TaskSchema, TagSchema],
         directory: dir.path,
+        name: 'timebrew',
       );
     }
 
