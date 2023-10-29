@@ -108,14 +108,6 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
 
     return TabBar(
       controller: _tabController,
-      splashBorderRadius: BorderRadius.circular(50),
-      indicator: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-        shape: BoxShape.rectangle,
-        borderRadius: BorderRadius.circular(50),
-      ),
-      indicatorColor: Colors.transparent,
-      dividerColor: Colors.transparent,
       indicatorSize: TabBarIndicatorSize.tab,
       tabs: tabWidgets,
     );
@@ -142,14 +134,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
           ],
           bottom: PreferredSize(
             preferredSize: buildTabBar(context).preferredSize,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(50),
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              ),
-              child: buildTabBar(context),
-            ),
+            child: buildTabBar(context),
           ),
         ),
         body: TabBarView(
@@ -167,7 +152,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             if (currentTitle != 'Stats') {
               return FloatingActionButton.extended(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 onPressed: () {
                   switch (currentTitle) {
