@@ -1,4 +1,4 @@
-package com.example.timebrew
+package roy.siddharth.timebrew
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -5,6 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/widgets/restart.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import './utils.dart';
 
 class Settings extends StatefulWidget {
@@ -31,22 +33,30 @@ class _SettingsState extends State<Settings> {
             title: const Text('Export timelogs'),
             subtitle: const Text('As CSV'),
             onTap: () async {
-              String? selectedDirectory =
-                  await FilePicker.platform.getDirectoryPath();
+              bool hasPermission = false;
+              if (Platform.isAndroid) {
+                hasPermission =
+                    await Permission.manageExternalStorage.request().isGranted;
+              }
 
-              if (selectedDirectory != null) {
-                final csvString = await convertTimelogsToCSV();
+              if (hasPermission) {
+                String? selectedDirectory =
+                    await FilePicker.platform.getDirectoryPath();
 
-                final csvFile = File('$selectedDirectory/timelogs.csv');
-                await csvFile.writeAsString(csvString);
-                // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Timelogs exported to $selectedDirectory/timelogs.csv',
+                if (selectedDirectory != null) {
+                  final csvString = await convertTimelogsToCSV();
+
+                  final csvFile = File('$selectedDirectory/timelogs.csv');
+                  await csvFile.writeAsString(csvString);
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Timelogs exported to $selectedDirectory/timelogs.csv',
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               }
             },
           ),
@@ -55,24 +65,31 @@ class _SettingsState extends State<Settings> {
             title: const Text('Backup'),
             subtitle: const Text('Backup your data locally'),
             onTap: () async {
-              String? selectedDirectory =
-                  await FilePicker.platform.getDirectoryPath();
+              bool hasPermission = false;
+              if (Platform.isAndroid) {
+                hasPermission =
+                    await Permission.manageExternalStorage.request().isGranted;
+              }
+              if (hasPermission) {
+                String? selectedDirectory =
+                    await FilePicker.platform.getDirectoryPath();
 
-              if (selectedDirectory != null) {
-                final db = await isar.db;
-                File file = File('$selectedDirectory/backup.tb');
-                if (file.existsSync()) {
-                  file.deleteSync();
-                }
-                await db.copyToFile('$selectedDirectory/backup.tb');
-                // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Backup has been made to $selectedDirectory/backup.tb',
+                if (selectedDirectory != null) {
+                  final db = await isar.db;
+                  File file = File('$selectedDirectory/backup.tb');
+                  if (file.existsSync()) {
+                    file.deleteSync();
+                  }
+                  await db.copyToFile('$selectedDirectory/backup.tb');
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Backup has been made to $selectedDirectory/backup.tb',
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               }
             },
           ),
@@ -84,8 +101,6 @@ class _SettingsState extends State<Settings> {
               FilePickerResult? selectedFile =
                   await FilePicker.platform.pickFiles(
                 dialogTitle: 'Pick Timebrew backup file',
-                allowedExtensions: ['tb'],
-                type: FileType.custom,
               );
               if (selectedFile != null) {
                 if (selectedFile.files.single.path != null) {
