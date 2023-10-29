@@ -1,9 +1,9 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/widgets/restart.dart';
 import 'package:url_launcher/url_launcher.dart';
 import './utils.dart';
 
@@ -99,7 +99,7 @@ class _SettingsState extends State<Settings> {
                       return AlertDialog(
                         title: const Text('Warning'),
                         content: const Text(
-                          'You could loose data if the selected file is corrupted or invalid and you will have to restart the app to load the restored data.',
+                          'You could loose data if the selected file is corrupted or invalid.',
                         ),
                         actions: [
                           TextButton(
@@ -113,7 +113,8 @@ class _SettingsState extends State<Settings> {
                               await destFile.writeAsBytes(
                                 bytes,
                               );
-                              exit(0);
+                              // ignore: use_build_context_synchronously
+                              RestartWidget.restartApp(context);
                             },
                             child: const Text('Proceed'),
                           )
