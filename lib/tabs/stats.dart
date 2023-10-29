@@ -139,6 +139,7 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
                             ),
                             child: Text(
                               '${hour.totalHours.toStringAsFixed(1)}h',
+                              style: const TextStyle(fontSize: 10.1),
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.visible,
                             ),
@@ -154,6 +155,7 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
               ),
               Text(
                 hour.moment.split(',')[0],
+                style: const TextStyle(fontSize: 10.1),
               ),
             ],
           ),
