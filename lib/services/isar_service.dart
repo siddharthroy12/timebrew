@@ -12,7 +12,6 @@ class IsarService {
   }
 
   Future<Isar> openDB() async {
-    
     final dir = await getApplicationDocumentsDirectory();
 
     if (Isar.instanceNames.isEmpty) {
@@ -23,7 +22,7 @@ class IsarService {
       );
     }
 
-    return Future.value(Isar.getInstance());
+    return Future.value(Isar.getInstance('timebrew'));
   }
 
   Future<Timelog?> getTimelogById(Id timelogId) async {
