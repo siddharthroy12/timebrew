@@ -1,4 +1,5 @@
 import 'dart:async' as async;
+import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/models/task.dart';
@@ -119,15 +120,48 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  Duration(milliseconds: _timeSinceStart)
+                Builder(builder: (context) {
+                  final durations = Duration(milliseconds: _timeSinceStart)
                       .toString()
-                      .split('.')[0],
-                  style: const TextStyle(
+                      .split('.')[0]
+                      .split(':');
+
+                  const durationTextStyle = TextStyle(
                     fontSize: 50,
                     fontWeight: FontWeight.bold,
-                  ),
-                ),
+                  );
+                  const duration = Duration(milliseconds: 200);
+                  const curve = Curves.elasticOut;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedFlipCounter(
+                        duration: duration,
+                        curve: curve,
+                        value: int.parse(durations[0]),
+                        wholeDigits: 2,
+                        textStyle: durationTextStyle,
+                      ),
+                      const Text(':', style: durationTextStyle),
+                      AnimatedFlipCounter(
+                        duration: duration,
+                        curve: curve,
+                        value: int.parse(durations[1]),
+                        wholeDigits: 2,
+                        textStyle: durationTextStyle,
+                      ),
+                      const Text(':', style: durationTextStyle),
+                      AnimatedFlipCounter(
+                        duration: duration,
+                        curve: curve,
+                        value: int.parse(durations[2]),
+                        wholeDigits: 2,
+                        textStyle: durationTextStyle,
+                      ),
+                    ],
+                  );
+                }),
                 IconButton.filled(
                   iconSize: 36,
                   onPressed: _selectedTask != null ? toggleTracking : null,

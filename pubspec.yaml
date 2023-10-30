@@ -46,6 +46,7 @@ dependencies:
   fl_chart: ^0.64.0
   shared_preferences: ^2.2.2
   permission_handler: ^11.0.1
+  animated_flip_counter: ^0.2.6
 
 dev_dependencies:
   flutter_test:
