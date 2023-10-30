@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
@@ -139,7 +140,7 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
                             ),
                             child: Text(
                               '${hour.totalHours.toStringAsFixed(1)}h',
-                              style: const TextStyle(fontSize: 10.1),
+                              style: const TextStyle(fontSize: 12),
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.visible,
                             ),
@@ -155,7 +156,7 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
               ),
               Text(
                 hour.moment.split(',')[0],
-                style: const TextStyle(fontSize: 10.1),
+                style: const TextStyle(fontSize: 12),
               ),
             ],
           ),
@@ -221,21 +222,29 @@ class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
             builder: (context, snapshot) {
               final bars = snapshot.data!;
               return Expanded(
-                child: Scrollbar(
-                  controller: scrollController,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 15.0),
-                    child: ListView.separated(
-                      reverse: true,
-                      controller: scrollController,
-                      itemCount: bars.length,
-                      scrollDirection: Axis.horizontal,
-                      separatorBuilder: (context, index) => const SizedBox(
-                        width: 10,
+                child: Listener(
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      final offset = event.scrollDelta.dy;
+                      scrollController.jumpTo(scrollController.offset + offset);
+                    }
+                  },
+                  child: Scrollbar(
+                    controller: scrollController,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 15.0),
+                      child: ListView.separated(
+                        reverse: true,
+                        controller: scrollController,
+                        itemCount: bars.length,
+                        scrollDirection: Axis.horizontal,
+                        separatorBuilder: (context, index) => const SizedBox(
+                          width: 10,
+                        ),
+                        itemBuilder: (context, index) {
+                          return bars[index];
+                        },
                       ),
-                      itemBuilder: (context, index) {
-                        return bars[index];
-                      },
                     ),
                   ),
                 ),
