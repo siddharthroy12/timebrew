@@ -245,16 +245,17 @@ class _CreateTimelogDialogState extends State<CreateTimelogDialog> {
                             ? const Icon(Icons.access_time_rounded)
                             : Container(),
                         label: Text(millisecondsToTime(_startTime)),
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.resolveWith(
-                            (states) => const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(4),
-                              ),
+                        style: OutlinedButton.styleFrom(
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(4),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.resolveWith(
-                            (states) => const Size.fromHeight(50),
+                          minimumSize: const Size.fromHeight(50),
+                          side: BorderSide(
+                            color: (_endTime > _startTime)
+                                ? Theme.of(context).colorScheme.outline
+                                : Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ),
@@ -277,16 +278,17 @@ class _CreateTimelogDialogState extends State<CreateTimelogDialog> {
                             ? const Icon(Icons.access_time_rounded)
                             : Container(),
                         label: Text(millisecondsToTime(_endTime)),
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.resolveWith(
-                            (states) => const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(4),
-                              ),
+                        style: OutlinedButton.styleFrom(
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(4),
                             ),
                           ),
-                          minimumSize: MaterialStateProperty.resolveWith(
-                            (states) => const Size.fromHeight(50),
+                          minimumSize: const Size.fromHeight(50),
+                          side: BorderSide(
+                            color: (_endTime > _startTime)
+                                ? Theme.of(context).colorScheme.outline
+                                : Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ),
@@ -304,7 +306,9 @@ class _CreateTimelogDialogState extends State<CreateTimelogDialog> {
           child: const Text('CLOSE'),
         ),
         TextButton(
-          onPressed: _task != null ? () => _onSave(context) : null,
+          onPressed: (_task != null) && (_endTime > _startTime)
+              ? () => _onSave(context)
+              : null,
           child: const Text('SAVE'),
         ),
       ],
