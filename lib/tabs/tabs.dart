@@ -108,7 +108,6 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
 
     return TabBar(
       controller: _tabController,
-      indicatorSize: TabBarIndicatorSize.tab,
       tabs: tabWidgets,
     );
   }
@@ -132,10 +131,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
               icon: const Icon(Icons.settings_outlined),
             )
           ],
-          bottom: PreferredSize(
-            preferredSize: buildTabBar(context).preferredSize,
-            child: buildTabBar(context),
-          ),
+          bottom: buildTabBar(context),
         ),
         body: TabBarView(
           controller: _tabController,
