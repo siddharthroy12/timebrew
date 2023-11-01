@@ -86,6 +86,10 @@ class _TimelogsState extends State<Timelogs>
               itemComparator: (item1, item2) => item1.startTime.compareTo(
                 item2.startTime,
               ), // optional
+              groupComparator: (group1, group2) =>
+                  DateTimeFormatting.fromDateString(group1).compareTo(
+                DateTimeFormatting.fromDateString(group2),
+              ),
               useStickyGroupSeparators: true, // optional
               order: GroupedListOrder.DESC, // optional
             );

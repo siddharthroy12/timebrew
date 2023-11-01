@@ -1,24 +1,34 @@
+const months = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
+];
+
 extension DateTimeFormatting on DateTime {
   String toDateString() {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
     final day = this.day.toString();
     final month = months[this.month - 1];
     final year = this.year.toString();
 
     return '$month $day, $year';
+  }
+
+  static DateTime fromDateString(String dateString) {
+    final splits = dateString.split(' ');
+    final month = months.indexOf(splits[0]) + 1;
+    final day = int.parse(splits[1].replaceAll(',', ''));
+    final year = int.parse(splits[2]);
+
+    return DateTime(year, month, day);
   }
 }
 
