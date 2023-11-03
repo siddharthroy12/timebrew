@@ -131,7 +131,7 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                     fontWeight: FontWeight.bold,
                   );
                   const duration = Duration(milliseconds: 200);
-                  const curve = Curves.elasticOut;
+                  const curve = Curves.decelerate;
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
