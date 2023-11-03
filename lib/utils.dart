@@ -44,16 +44,16 @@ String millisecondsToReadable(int milliseconds) {
   var result = "";
 
   if (days > 0) {
-    result += "$days day ";
+    result += "${days}Day\n";
   }
   if (hours > 0) {
-    result += "$hours hour ";
+    result += "${hours}Hr\n";
   }
   if (minutes > 0) {
-    result += "$minutes minute ";
+    result += "${minutes}Min\n";
   }
   if (seconds > 0 && minutes == 0) {
-    result += "$seconds second";
+    result += "${seconds}Sec\n";
   }
 
   final trim = result.trim();

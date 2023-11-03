@@ -8,6 +8,7 @@ part 'task.g.dart';
 class Task {
   Id id = Isar.autoIncrement;
   late String name;
+  late String link;
   final tags = IsarLinks<Tag>();
 
   @Backlink(to: 'task')

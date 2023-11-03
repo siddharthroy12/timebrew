@@ -110,9 +110,11 @@ class IsarService {
     yield* isar.tasks.where().watch(fireImmediately: true);
   }
 
-  Future<void> addTask(String name, List<Id> tagIds) async {
+  Future<void> addTask(String name, String link, List<Id> tagIds) async {
     final isar = await db;
-    final Task task = Task()..name = name;
+    final Task task = Task()
+      ..name = name
+      ..link = link;
 
     for (Id tagId in tagIds) {
       Tag? tag = await isar.tags.get(tagId);
@@ -127,12 +129,18 @@ class IsarService {
     });
   }
 
-  Future<void> updateTask(Id id, String name, List<Id> tags) async {
+  Future<void> updateTask(
+    Id id,
+    String name,
+    String link,
+    List<Id> tags,
+  ) async {
     final isar = await db;
     var task = await isar.tasks.get(id);
 
     if (task != null) {
       task.name = name;
+      task.link = link;
       task.tags.removeWhere((element) => !tags.contains(element.id));
 
       for (var tag in tags) {

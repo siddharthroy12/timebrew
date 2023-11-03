@@ -16,9 +16,11 @@ class CreateTaskDialog extends StatefulWidget {
 
 class _CreateTaskDialogState extends State<CreateTaskDialog> {
   final isar = IsarService();
-  var textFieldController = TextEditingController();
+  var nameFieldController = TextEditingController();
+  var linkFieldContoller = TextEditingController();
 
   String name = "";
+  String link = "";
   List<int> selectedTags = [];
 
   @override
@@ -34,17 +36,19 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
     if (task != null) {
       setState(() {
         name = task.name;
+        link = task.link;
         selectedTags = task.tags.map((e) => e.id).toList();
-        textFieldController.text = name;
+        nameFieldController.text = name;
+        linkFieldContoller.text = link;
       });
     }
   }
 
   void _onSave(BuildContext context) async {
     if (widget.id != null) {
-      isar.updateTask(widget.id!, name, selectedTags);
+      isar.updateTask(widget.id!, name, link, selectedTags);
     } else {
-      isar.addTask(name, selectedTags);
+      isar.addTask(name, link, selectedTags);
     }
     Navigator.of(context).pop();
   }
@@ -69,13 +73,27 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
               height: 20,
             ),
             TextField(
-              controller: textFieldController,
+              controller: nameFieldController,
               cursorHeight: 20,
               style: const TextStyle(height: 1.2),
               decoration: const InputDecoration(label: Text('Task name')),
               onChanged: (String value) {
                 setState(() {
                   name = value;
+                });
+              },
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            TextField(
+              controller: linkFieldContoller,
+              cursorHeight: 20,
+              style: const TextStyle(height: 1.2),
+              decoration: const InputDecoration(label: Text('Link')),
+              onChanged: (String value) {
+                setState(() {
+                  link = value;
                 });
               },
             ),

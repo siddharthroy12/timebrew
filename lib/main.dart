@@ -1,3 +1,4 @@
+import 'package:context_menus/context_menus.dart';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/gestures.dart';
@@ -35,6 +36,11 @@ class MyApp extends StatelessWidget {
               useMaterial3: true,
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              cardTheme: CardTheme(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
               timePickerTheme: const TimePickerThemeData(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(
@@ -78,7 +84,39 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             ),
-            home: const Tabs(),
+            home: ContextMenuOverlay(
+              buttonBuilder: (context, config, [style]) => MenuItemButton(
+                onPressed: config.onPressed,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 100,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      config.label,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              cardBuilder: (_, children) => Card(
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Column(
+                    children: children,
+                  ),
+                ),
+              ),
+              child: const Tabs(),
+            ),
           ),
         );
       },
