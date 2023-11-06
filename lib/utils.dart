@@ -24,7 +24,6 @@ class MomentHours {
 /// Convert milliseconds to human readable format
 /// [milliseconds] is epoc time
 /// and this returns a string like `2 hours 34 minutes`
-
 String millisecondsToReadable(int milliseconds) {
   const millisecondsInSecond = 1000;
   const secondsInMinute = 60;
@@ -44,16 +43,16 @@ String millisecondsToReadable(int milliseconds) {
   var result = "";
 
   if (days > 0) {
-    result += "${days}Day\n";
+    result += "$days day ";
   }
   if (hours > 0) {
-    result += "${hours}Hr\n";
+    result += "$hours hour ";
   }
   if (minutes > 0) {
-    result += "${minutes}Min\n";
+    result += "$minutes minute ";
   }
   if (seconds > 0 && minutes == 0) {
-    result += "${seconds}Sec\n";
+    result += "$seconds second";
   }
 
   final trim = result.trim();
