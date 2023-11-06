@@ -35,7 +35,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
     TabEntry(title: 'Logs', icon: Icons.history_rounded),
     TabEntry(title: 'Tasks', icon: Icons.checklist_rounded),
-    TabEntry(title: 'Tags', icon: Icons.tag_rounded),
+    TabEntry(title: 'Tags', icon: Icons.local_offer_rounded),
     TabEntry(title: 'Stats', icon: Icons.analytics_rounded),
   ];
 

@@ -29,9 +29,13 @@ class _TasksState extends State<Tasks> with AutomaticKeepAliveClientMixin {
       initialData: const [],
       stream: isar.getTaskStream(),
       builder: (context, snapshot) {
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
+        return ListView.separated(
           itemCount: snapshot.data!.length,
+          separatorBuilder: (context, index) {
+            return const Divider(
+              height: 0,
+            );
+          },
           itemBuilder: (BuildContext context, int index) {
             Task task = snapshot.data![index];
             return StreamBuilder<List<Timelog>>(
@@ -76,119 +80,104 @@ class TaskEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        name,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                        millisecondsToReadable(milliseconds),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                  Builder(builder: (context) {
-                    if (tags.isEmpty) {
-                      return Container();
-                    }
-                    return const SizedBox(
-                      height: 10,
-                    );
-                  }),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: tags
-                        .map(
-                          (tag) => ActionChip(
-                            onPressed: () {},
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(50),
-                              ),
-                            ),
-                            color: MaterialStateProperty.resolveWith((states) {
-                              return HexColor.fromHex(tag.color);
-                            }),
-                            side: const BorderSide(
-                              width: 0,
-                              color: Colors.transparent,
-                            ),
-                            label: Text(
-                              '#${tag.name}',
-                              style: TextStyle(
-                                color: HexColor.fromHex(tag.color)
-                                            .computeLuminance() >=
-                                        0.5
-                                    ? Colors.black
-                                    : Colors.white,
-                              ),
-                            ),
+    return ListTile(
+      onTap: () {},
+      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      subtitle: tags.isNotEmpty
+          ? Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: tags
+                    .map(
+                      (tag) => ActionChip(
+                        onPressed: () {},
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(50),
                           ),
-                        )
-                        .toList(),
-                  ),
-                ],
+                        ),
+                        color: MaterialStateProperty.resolveWith((states) {
+                          return HexColor.fromHex(tag.color).withOpacity(0.2);
+                        }),
+                        side: BorderSide(
+                          width: 1,
+                          color: HexColor.fromHex(tag.color),
+                        ),
+                        label: Text(
+                          '#${tag.name}',
+                          style: TextStyle(
+                            color: HexColor.fromHex(tag.color)
+                                        .computeLuminance() >=
+                                    0.5
+                                ? Colors.black
+                                : Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
-            ),
-            PopupMenuButton(
-              itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                PopupMenuItem(
-                  value: 'edit',
-                  child: const Text('Edit'),
-                  onTap: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (context) {
-                        return CreateTaskDialog(
-                          id: id,
-                        );
-                      },
-                    );
-                  },
-                ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: const Text('Delete'),
-                  onTap: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (context) {
-                        return ConfirmDeleteDialog(
-                          description: 'Are you sure you want to delete $name',
-                          onConfirm: () {
-                            isar.deleteTask(id, false);
-
-                            final snackBar = SnackBar(
-                              content: Text('Task $name deleted'),
-                            );
-
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(snackBar);
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
             )
-          ],
-        ),
+          : null,
+      trailing: PopupMenuButton(
+        itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+          PopupMenuItem(
+            value: 'edit',
+            child: const Text('Edit'),
+            onTap: () {
+              showDialog<void>(
+                context: context,
+                builder: (context) {
+                  return CreateTaskDialog(
+                    id: id,
+                  );
+                },
+              );
+            },
+          ),
+          PopupMenuItem(
+            value: 'delete',
+            child: const Text('Delete'),
+            onTap: () {
+              showDialog<void>(
+                context: context,
+                builder: (context) {
+                  return ConfirmDeleteDialog(
+                    description: 'Are you sure you want to delete $name',
+                    onConfirm: () {
+                      isar.deleteTask(id, false);
+
+                      final snackBar = SnackBar(
+                        content: Text('Task $name deleted'),
+                      );
+
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+      title: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            name,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(
+            width: 10,
+          ),
+          Text(
+            millisecondsToReadable(milliseconds),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }

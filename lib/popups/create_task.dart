@@ -115,10 +115,12 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
                         ),
                       ),
                       color: MaterialStateProperty.resolveWith((states) {
-                        return HexColor.fromHex(tag.color);
+                        return HexColor.fromHex(tag.color).withOpacity(0.2);
                       }),
-                      side:
-                          const BorderSide(width: 0, color: Colors.transparent),
+                      side: BorderSide(
+                        width: 1,
+                        color: HexColor.fromHex(tag.color),
+                      ),
                       selected: selected,
                       onSelected: (newSelected) {
                         setState(() {
