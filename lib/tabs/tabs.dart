@@ -27,9 +27,8 @@ class Tabs extends StatefulWidget {
 }
 
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  String currentTitle = "";
   int _tabIndex = 0;
+  bool desktopView = true;
 
   List<TabEntry> tabs = [
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
@@ -41,28 +40,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
 
   @override
   void initState() {
-    currentTitle = tabs[0].title;
-    _tabController = TabController(length: tabs.length, vsync: this);
-    _tabController.addListener(changeTitle); // Registering listener
-
-    _tabController.animation?.addListener(() {
-      int indexChange = _tabController.offset.round();
-      int index = _tabController.index + indexChange;
-
-      if (index != _tabIndex) {
-        setState(() => _tabIndex = index);
-        changeTitle();
-      }
-    });
     super.initState();
-  }
-
-  // This function is called, every time active tab is changed
-  void changeTitle() {
-    setState(() {
-      // get index of active tab & change current appbar title
-      currentTitle = tabs[_tabIndex].title;
-    });
   }
 
   void _showAction(BuildContext context, Dialog dialog) {
@@ -81,96 +59,121 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     );
   }
 
-  TabBar buildTabBar(BuildContext context) {
-    List<Tab> tabWidgets = [];
-    bool minimal = MediaQuery.of(context).size.width < 550;
-
-    for (TabEntry tab in tabs) {
-      tabWidgets.add(
-        Tab(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(tab.icon),
-              ...(minimal
-                  ? []
-                  : [
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Text(tab.title)
-                    ]),
-            ],
-          ),
-        ),
-      );
+  void _action() {
+    switch (_tabIndex) {
+      case 0:
+      case 2:
+        _showAction(context, Dialog.task);
+        break;
+      case 3:
+        _showAction(context, Dialog.tag);
+        break;
+      case 1:
+        _showAction(context, Dialog.timelog);
     }
-
-    return TabBar(
-      controller: _tabController,
-      tabs: tabWidgets,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: tabs.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(currentTitle),
-          actions: [
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const Settings(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.settings_outlined),
+    desktopView = MediaQuery.of(context).size.width > 500;
+    final settingsButton = IconButton(
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const Settings(),
+          ),
+        );
+      },
+      icon: const Icon(Icons.settings_outlined),
+    );
+    return Scaffold(
+      appBar: !desktopView
+          ? AppBar(
+              title: Text(tabs[_tabIndex].title),
+              actions: [settingsButton],
             )
-          ],
-          bottom: buildTabBar(context),
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          children: const [
-            Timer(),
-            Timelogs(),
-            Tasks(),
-            Tags(),
-            Stats(),
-          ],
-        ),
-        floatingActionButton: Builder(
-          builder: (context) {
-            if (currentTitle != 'Stats') {
-              return FloatingActionButton.extended(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                onPressed: () {
-                  switch (currentTitle) {
-                    case 'Tasks':
-                    case 'Timer':
-                      _showAction(context, Dialog.task);
-                      break;
-                    case 'Tags':
-                      _showAction(context, Dialog.tag);
-                      break;
-                    case 'Logs':
-                      _showAction(context, Dialog.timelog);
-                  }
-                },
-                label: Text(
-                    'Add ${currentTitle == "Timer" ? "Task" : currentTitle.substring(0, currentTitle.length - 1)}'),
-                icon: const Icon(Icons.add_rounded),
-              );
-            }
-            return Container();
-          },
-        ),
+          : null,
+      body: Row(
+        children: [
+          ...desktopView
+              ? [
+                  NavigationRail(
+                    selectedIndex: _tabIndex,
+                    groupAlignment: 0,
+                    onDestinationSelected: (int index) {
+                      setState(() {
+                        _tabIndex = index;
+                      });
+                    },
+                    labelType: NavigationRailLabelType.all,
+                    leading: FloatingActionButton(
+                      elevation: 0,
+                      onPressed: _action,
+                      child: const Icon(Icons.add),
+                    ),
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: settingsButton,
+                    ),
+                    destinations: tabs
+                        .map(
+                          (e) => NavigationRailDestination(
+                            icon: Icon(e.icon),
+                            label: Text(e.title),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const VerticalDivider(thickness: 1, width: 1),
+                ]
+              : [],
+          Expanded(
+            child: IndexedStack(
+              index: _tabIndex,
+              children: const [
+                Timer(),
+                Timelogs(),
+                Tasks(),
+                Tags(),
+                Stats(),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: !desktopView
+          ? NavigationBar(
+              onDestinationSelected: (int index) {
+                setState(() {
+                  _tabIndex = index;
+                });
+              },
+              selectedIndex: _tabIndex,
+              destinations: tabs
+                  .map(
+                    (e) => NavigationDestination(
+                      icon: Icon(e.icon),
+                      label: e.title,
+                    ),
+                  )
+                  .toList(),
+            )
+          : null,
+      floatingActionButton: Builder(
+        builder: (context) {
+          if (_tabIndex < 4 && !desktopView) {
+            return FloatingActionButton.extended(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              onPressed: _action,
+              label: Text(
+                  'Add ${_tabIndex == 0 ? "Task" : tabs[_tabIndex].title.substring(0, tabs[_tabIndex].title.length - 1)}'),
+              icon: const Icon(Icons.add_rounded),
+            );
+          }
+          return Container();
+        },
       ),
     );
   }
