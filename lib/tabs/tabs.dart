@@ -97,32 +97,55 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
         children: [
           ...desktopView
               ? [
-                  NavigationRail(
-                    selectedIndex: _tabIndex,
-                    groupAlignment: 0,
-                    onDestinationSelected: (int index) {
-                      setState(() {
-                        _tabIndex = index;
-                      });
-                    },
-                    labelType: NavigationRailLabelType.all,
-                    leading: FloatingActionButton(
-                      elevation: 0,
-                      onPressed: _action,
-                      child: const Icon(Icons.add),
-                    ),
-                    trailing: Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: settingsButton,
-                    ),
-                    destinations: tabs
-                        .map(
-                          (e) => NavigationRailDestination(
-                            icon: Icon(e.icon),
-                            label: Text(e.title),
+                  Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 45.0),
+                        child: NavigationRail(
+                          selectedIndex: _tabIndex,
+                          groupAlignment: 0,
+                          onDestinationSelected: (int index) {
+                            setState(() {
+                              _tabIndex = index;
+                            });
+                          },
+                          labelType: NavigationRailLabelType.all,
+                          leading: Padding(
+                            padding: const EdgeInsets.only(top: 5.0),
+                            child: SizedBox(
+                              height: 45.0,
+                              width: 45.0,
+                              child: FittedBox(
+                                child: FloatingActionButton(
+                                  elevation: 0,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(10),
+                                    ),
+                                  ),
+                                  onPressed: _action,
+                                  child: const Icon(Icons.add),
+                                ),
+                              ),
+                            ),
                           ),
-                        )
-                        .toList(),
+                          destinations: tabs
+                              .map(
+                                (e) => NavigationRailDestination(
+                                  icon: Icon(e.icon),
+                                  label: Text(e.title),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 20,
+                        left: 0,
+                        right: 0,
+                        child: Center(child: settingsButton),
+                      ),
+                    ],
                   ),
                   const VerticalDivider(thickness: 1, width: 1),
                 ]
