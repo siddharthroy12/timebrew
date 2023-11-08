@@ -43,4 +43,16 @@ extension DateTimeExtension on DateTime {
       return sum ~/ 7 + 1;
     }
   }
+
+  DateTime get lastDayOfMonth =>
+      month < 12 ? DateTime(year, month + 1, 0) : DateTime(year + 1, 1, 0);
+  DateTime get firstDayOfMonth => DateTime(year, month, 1);
+
+  DateTime get getDate => DateTime(year, month, day);
+
+  DateTime get getStartOfTheWeek =>
+      subtract(Duration(days: weekday - 2)).getDate;
+
+  DateTime get getEndOfTheWeek =>
+      add(Duration(days: DateTime.daysPerWeek - weekday - 1)).getDate;
 }

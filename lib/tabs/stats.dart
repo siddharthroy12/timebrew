@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
 
-// To select between differnt grouping mode
-enum Calendar { day, week, month }
+enum GroupBy { daysInMonth, weeksInMonth }
 
 class Stats extends StatefulWidget {
   const Stats({super.key});
@@ -15,291 +15,395 @@ class Stats extends StatefulWidget {
   State<Stats> createState() => _StatsState();
 }
 
-class _StatsState extends State<Stats> with AutomaticKeepAliveClientMixin {
+class _StatsState extends State<Stats> {
   final isar = IsarService();
-  Calendar calendarView = Calendar.day;
-  // Just to show the horizontal scrollbar
-  ScrollController scrollController = ScrollController();
-  List<Id> selectedTags = [];
-  List<SizedBox> bars = [];
-
-  @override
-  bool get wantKeepAlive => true;
-
-  Future<List<SizedBox>> _buildBars() async {
-    List<SizedBox> newBars = [];
-    final timelogs = await isar.getTimelogStream().first;
-    final tags = await isar.getTagStream().first;
-
-    List<MomentHours> hours = [];
-    int maxHours = 0;
-    switch (calendarView) {
-      case Calendar.day:
-        hours = getDailyHours(timelogs);
-        maxHours = 24;
-        break;
-      case Calendar.month:
-        hours = getMonthlyHours(timelogs);
-        maxHours = 730;
-        break;
-      case Calendar.week:
-        hours = getWeeklyHours(timelogs);
-        maxHours = 24 * 7;
-        break;
-    }
-    for (var hour in hours) {
-      newBars.add(
-        SizedBox(
-          width: 53,
-          child: Column(
-            children: [
-              Expanded(
-                child: Tooltip(
-                  message: formatHours(hour.totalHours),
-                  child: Builder(builder: (context) {
-                    // Build FractionallySizedBoxes for tags
-                    List<FractionallySizedBox> tagBoxes = [];
-                    List<Pair<Id, double>> portions = [];
-
-                    var totalTagHours = 0.0;
-
-                    for (var tag in hour.tagHours.keys) {
-                      totalTagHours += hour.tagHours[tag]!;
-                    }
-                    for (var tag in hour.tagHours.keys) {
-                      double portion = hour.tagHours[tag]! / totalTagHours;
-
-                      if (selectedTags.contains(tag)) {
-                        portions.add(
-                          Pair<Id, double>(
-                            first: tag,
-                            last: portion,
-                          ),
-                        );
-                      }
-                    }
-                    portions.sort(
-                      (a, b) => a.last.compareTo(b.last),
-                    );
-
-                    double portionAdded = 0;
-
-                    for (var portion in portions) {
-                      final color = tags
-                          .firstWhere((element) => element.id == portion.first)
-                          .color;
-                      var finalPortion = portion.last + portionAdded;
-                      finalPortion =
-                          ((finalPortion) * (hour.totalHours / maxHours));
-
-                      portionAdded += portion.last;
-
-                      tagBoxes.add(
-                        FractionallySizedBox(
-                          heightFactor: finalPortion,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: HexColor.fromHex(
-                                color,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Stack(
-                      alignment: AlignmentDirectional.bottomStart,
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5),
-                            color: Theme.of(context).colorScheme.surfaceVariant,
-                          ),
-                        ),
-                        FractionallySizedBox(
-                          heightFactor: hour.totalHours / maxHours,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: Theme.of(context).colorScheme.surfaceTint,
-                            ),
-                          ),
-                        ),
-                        ...tagBoxes.reversed,
-                        FractionallySizedBox(
-                          heightFactor: (hour.totalHours / maxHours),
-                          widthFactor: 1,
-                          child: Container(
-                            transform: Matrix4.translationValues(
-                              0.0,
-                              -22.0,
-                              0.0,
-                            ),
-                            child: Text(
-                              '${hour.totalHours.toStringAsFixed(1)}h',
-                              style: const TextStyle(fontSize: 12),
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.visible,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ),
-              ),
-              const SizedBox(
-                height: 5,
-              ),
-              Text(
-                hour.moment.split(',')[0],
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    return Future.value(newBars);
-  }
+  List<List<MomentHours>> daysInWeeks = [];
+  List<List<MomentHours>> monthsInQuaters = [];
+  int outerIndex = 0;
+  int innerIndex = 0;
+  GroupBy groupBy = GroupBy.weeksInMonth;
 
   @override
   void initState() {
     super.initState();
-    _buildBars();
+    isar.getTimelogStream().listen((timelogs) {
+      final (daysInWeeks, monthsInQuaters) = getStatsHours(timelogs);
+      setState(() {
+        this.daysInWeeks = daysInWeeks;
+        if (daysInWeeks.isNotEmpty) {
+          int finalInnerIndex = 0;
 
-    isar.getTagStream().listen((event) {
-      setState(() {});
-      selectedTags = event.map((e) => e.id).toList();
+          outerIndex = daysInWeeks.length - 1;
+
+          for (var i = 0; i < daysInWeeks[outerIndex].length; i++) {
+            if (daysInWeeks[outerIndex][i].totalHours != 0) {
+              finalInnerIndex = i;
+            }
+          }
+          innerIndex = finalInnerIndex;
+        }
+
+        this.monthsInQuaters = monthsInQuaters;
+      });
     });
-    isar.getTaskStream().listen((event) {
-      setState(() {});
+  }
+
+  void _selectNextMoment() {
+    setState(() {
+      if (innerIndex == daysInWeeks[outerIndex].length - 1) {
+        if (outerIndex < daysInWeeks.length - 1) {
+          outerIndex += 1;
+          int finalInnerIndex = daysInWeeks[outerIndex].length - 1;
+          for (var i = finalInnerIndex; i > 0; i--) {
+            if (daysInWeeks[outerIndex][i].totalHours != 0) {
+              finalInnerIndex = i;
+            }
+          }
+          innerIndex = finalInnerIndex;
+        }
+      } else {
+        if (innerIndex < daysInWeeks[outerIndex].length - 1) {
+          int oldIndex = innerIndex;
+          innerIndex += 1;
+
+          while (innerIndex < daysInWeeks[outerIndex].length - 1 &&
+              daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
+            innerIndex += 1;
+          }
+          if (daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
+            if (outerIndex < daysInWeeks.length - 1) {
+              outerIndex += 1;
+              int finalInnerIndex = daysInWeeks[outerIndex].length - 1;
+              for (var i = finalInnerIndex; i > 0; i--) {
+                if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                  finalInnerIndex = i;
+                }
+              }
+              innerIndex = finalInnerIndex;
+            } else {
+              innerIndex = oldIndex;
+            }
+          }
+        }
+      }
     });
-    isar.getTimelogStream().listen((event) {
-      setState(() {});
+  }
+
+  void _selectPreviousMoment() {
+    setState(() {
+      if (innerIndex == 0) {
+        if (outerIndex > 0) {
+          outerIndex -= 1;
+          int finalInnerIndex = 0;
+          for (var i = finalInnerIndex;
+              i < daysInWeeks[outerIndex].length;
+              i++) {
+            if (daysInWeeks[outerIndex][i].totalHours != 0) {
+              finalInnerIndex = i;
+            }
+          }
+          innerIndex = finalInnerIndex;
+        }
+      } else {
+        if (innerIndex > 0) {
+          int oldIndex = innerIndex;
+
+          innerIndex -= 1;
+
+          while (innerIndex > 0 &&
+              daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
+            innerIndex -= 1;
+          }
+          if (daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
+            if (outerIndex > 0) {
+              outerIndex -= 1;
+              int finalInnerIndex = 0;
+              for (var i = finalInnerIndex;
+                  i < daysInWeeks[outerIndex].length;
+                  i++) {
+                if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                  finalInnerIndex = i;
+                }
+              }
+              innerIndex = finalInnerIndex;
+            } else {
+              innerIndex = oldIndex;
+            }
+          }
+        }
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SegmentedButton<Calendar>(
-            segments: const <ButtonSegment<Calendar>>[
-              ButtonSegment<Calendar>(
-                  value: Calendar.day,
-                  label: Text('Day'),
-                  icon: Icon(Icons.calendar_view_day)),
-              ButtonSegment<Calendar>(
-                  value: Calendar.week,
-                  label: Text('Week'),
-                  icon: Icon(Icons.calendar_view_week)),
-              ButtonSegment<Calendar>(
-                  value: Calendar.month,
-                  label: Text('Month'),
-                  icon: Icon(Icons.calendar_view_month)),
-            ],
-            selected: <Calendar>{calendarView},
-            onSelectionChanged: (Set<Calendar> newSelection) {
-              setState(() {
-                calendarView = newSelection.first;
-              });
-            },
+    String moment = '';
+    List<MomentHours> moments = [];
+    String timeSpent = '';
+    if (daysInWeeks.isNotEmpty && daysInWeeks[outerIndex].isNotEmpty) {
+      moment = daysInWeeks[outerIndex][innerIndex].moment;
+      moments = daysInWeeks[outerIndex];
+      timeSpent = millisecondsToReadable(
+          hoursToMilliseconds(daysInWeeks[outerIndex][innerIndex].totalHours));
+    }
+    return ListView(
+      children: [
+        Center(
+            child: Text(
+          timeSpent,
+          style: const TextStyle(
+            fontSize: 25,
           ),
-          const SizedBox(
-            height: 20,
+        )),
+        const SizedBox(
+          height: 20,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            IconButton(
+              onPressed: _selectPreviousMoment,
+              icon: const Icon(Icons.arrow_left),
+            ),
+            Text(moment),
+            IconButton(
+              onPressed: _selectNextMoment,
+              icon: const Icon(Icons.arrow_right),
+            ),
+          ],
+        ),
+        const SizedBox(
+          height: 20,
+        ),
+        SizedBox(
+          height: 150,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: BarChart(
+              moments: moments,
+              selectedMoment: innerIndex,
+              onSelectedMomentChange: (moment) {
+                setState(() {
+                  innerIndex = moment;
+                });
+              },
+            ),
           ),
-          FutureBuilder(
-            initialData: const [],
-            future: _buildBars(),
-            builder: (context, snapshot) {
-              final bars = snapshot.data!;
-              return Expanded(
-                child: Listener(
-                  onPointerSignal: (event) {
-                    if (event is PointerScrollEvent) {
-                      final offset = event.scrollDelta.dy;
-                      scrollController.jumpTo(scrollController.offset + offset);
-                    }
-                  },
-                  child: Scrollbar(
-                    controller: scrollController,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 15.0),
-                      child: ListView.separated(
-                        reverse: true,
-                        controller: scrollController,
-                        itemCount: bars.length,
-                        scrollDirection: Axis.horizontal,
-                        separatorBuilder: (context, index) => const SizedBox(
-                          width: 10,
-                        ),
-                        itemBuilder: (context, index) {
-                          return bars[index];
-                        },
+        ),
+        const SizedBox(
+          height: 20,
+        ),
+        Builder(
+          builder: (context) {
+            if (daysInWeeks.isNotEmpty && daysInWeeks[outerIndex].isNotEmpty) {
+              return MomentTasks(
+                  momentHours: daysInWeeks[outerIndex][innerIndex]);
+            } else {
+              return Container();
+            }
+          },
+        )
+      ],
+    );
+  }
+}
+
+class MomentTasks extends StatefulWidget {
+  final MomentHours momentHours;
+  const MomentTasks({super.key, required this.momentHours});
+
+  @override
+  State<MomentTasks> createState() => _MomentTasksState();
+}
+
+class _MomentTasksState extends State<MomentTasks> {
+  final isar = IsarService();
+
+  @override
+  Widget build(BuildContext context) {
+    final taskHours = widget.momentHours.taskHours.entries
+        .map((e) => (e.value, e.key))
+        .toList();
+
+    if (taskHours.isNotEmpty) {
+      taskHours.sort((a, b) => b.$1.compareTo(a.$1));
+    }
+    return Column(children: [
+      const Divider(
+        height: 0,
+      ),
+      ...taskHours
+          .map(
+            (e) => FutureBuilder(
+              future: isar.getTaskById(e.$2),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final task = snapshot.data!;
+                  return Column(
+                    children: [
+                      TaskEntry(
+                          name: task.name,
+                          id: task.id,
+                          milliseconds: hoursToMilliseconds(e.$1),
+                          tags: task.tags.toList()),
+                      const Divider(
+                        height: 0,
+                      )
+                    ],
+                  );
+                }
+                return Container();
+              },
+            ),
+          )
+          .toList()
+    ]);
+  }
+}
+
+class BarChart extends StatefulWidget {
+  final List<MomentHours> moments;
+  final Function(int) onSelectedMomentChange;
+  final int selectedMoment;
+  const BarChart({
+    super.key,
+    required this.selectedMoment,
+    required this.moments,
+    required this.onSelectedMomentChange,
+  });
+
+  @override
+  State<BarChart> createState() => _BarChartState();
+}
+
+class _BarChartState extends State<BarChart> {
+  @override
+  void initState() {
+    super.initState();
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var maxHours = 0.0;
+    for (var moment in widget.moments) {
+      if (moment.totalHours > maxHours) {
+        maxHours = moment.totalHours;
+      }
+    }
+    maxHours = roundToNearestMultipleOf5(maxHours.ceil()).toDouble();
+    if (maxHours < 5) {
+      maxHours = 5;
+    }
+    return Stack(children: [
+      Transform.translate(
+        offset: const Offset(0, -8),
+        child: Transform.scale(
+          scaleY: 1.05,
+          child: Column(
+            children: List.generate(
+              5,
+              (index) => Expanded(
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Divider(
+                        height: 0,
                       ),
                     ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '${((maxHours / 5) * (5 - index)).toStringAsFixed(1)}h',
+                      style: const TextStyle(fontSize: 9),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(left: 10.0, right: 35),
+        child: Row(
+          children: widget.moments
+              .asMap()
+              .entries
+              .map(
+                (entry) => Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Stack(
+                            alignment: AlignmentDirectional.bottomStart,
+                            clipBehavior: Clip.none,
+                            children: [
+                              const SizedBox(
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                              FractionallySizedBox(
+                                heightFactor:
+                                    (entry.value.totalHours / maxHours),
+                                widthFactor: 1,
+                                child: Container(
+                                  transform: Matrix4.translationValues(
+                                    0.0,
+                                    -22.0,
+                                    0.0,
+                                  ),
+                                  child: Text(
+                                    '${entry.value.totalHours.toStringAsFixed(1)}h',
+                                    style: const TextStyle(fontSize: 9),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.visible,
+                                  ),
+                                ),
+                              ),
+                              FractionallySizedBox(
+                                heightFactor: entry.value.totalHours / maxHours,
+                                child: InkWell(
+                                  onTap: () {
+                                    widget.onSelectedMomentChange(entry.key);
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(4),
+                                        topRight: Radius.circular(4),
+                                      ),
+                                      color: widget.selectedMoment == entry.key
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .inversePrimary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .secondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      Text(
+                        entry.value.moment.split(',')[0],
+                        style: const TextStyle(fontSize: 9),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
-          StreamBuilder(
-            initialData: const [],
-            stream: isar.getTagStream(),
-            builder: (context, tags) {
-              final rows = tags.data!.map((tag) {
-                bool selected = selectedTags.contains(tag.id);
-
-                return FilterChip(
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(50),
-                    ),
-                  ),
-                  color: MaterialStateProperty.resolveWith((states) {
-                    return HexColor.fromHex(tag.color);
-                  }),
-                  side: const BorderSide(width: 0, color: Colors.transparent),
-                  selected: selected,
-                  onSelected: (newSelected) {
-                    setState(() {
-                      if (selected) {
-                        selectedTags.remove(tag.id);
-                      } else {
-                        selectedTags.add(tag.id);
-                      }
-                    });
-                  },
-                  label: Text(
-                    '#${tag.name}',
-                    style: TextStyle(
-                      color:
-                          HexColor.fromHex(tag.color).computeLuminance() >= 0.5
-                              ? Colors.black
-                              : Colors.white,
-                    ),
-                  ),
-                );
-              }).toList();
-              return Wrap(
-                direction: Axis.horizontal,
-                alignment: WrapAlignment.center,
-                runSpacing: 5,
-                spacing: 5,
-                children: rows,
-              );
-            },
-          )
-        ],
+              )
+              .toList(),
+        ),
       ),
-    );
+    ]);
   }
 }

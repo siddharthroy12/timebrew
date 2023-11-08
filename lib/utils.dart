@@ -13,11 +13,11 @@ class Pair<E, F> {
 class MomentHours {
   String moment;
   double totalHours;
-  Map<Id, double> tagHours;
+  Map<Id, double> taskHours;
   MomentHours({
     required this.moment,
     required this.totalHours,
-    required this.tagHours,
+    required this.taskHours,
   });
 }
 
@@ -108,201 +108,114 @@ double getTimelogHours(Timelog timelog) {
   return (timelog.endTime - timelog.startTime) / 3.6e+6;
 }
 
-List<MomentHours> getDailyHours(List<Timelog> timelogs) {
-  List<MomentHours> result = [];
+int hoursToMilliseconds(double hours) {
+  return (hours * Duration.millisecondsPerHour).round();
+}
+
+(
+  List<List<MomentHours>>,
+  List<List<MomentHours>>,
+) getStatsHours(
+  List<Timelog> timelogs,
+) {
+  List<List<MomentHours>> daysInWeeks = [];
+  List<List<MomentHours>> monthsInQuaters = [];
   Map<String, MomentHours> groupByDay = {};
+  Map<String, MomentHours> groupByMonth = {};
+
+  // Loop over the timelogs and group MomentHours in day and months and get the latest and oldest timelogs timestamp
+  var oldestTimelogTimestamp = DateTime.now().millisecondsSinceEpoch;
+  var latestTimelogTimestamp = DateTime.now().millisecondsSinceEpoch;
 
   for (var timelog in timelogs) {
-    final dateString =
-        DateTime.fromMillisecondsSinceEpoch(timelog.startTime).toDateString();
-
+    final dateTimeString =
+        DateTime.fromMillisecondsSinceEpoch(timelog.endTime).toDateString();
+    final dayKey = dateTimeString;
+    final month = dateTimeString.split(' ')[0];
+    final year = dateTimeString.split(' ')[2];
+    final monthKey = '$month, $year';
     final hours = getTimelogHours(timelog);
 
-    Map<Id, double> tagHours = {};
-    for (var tag in timelog.task.value!.tags) {
-      if (tagHours.containsKey(tag.id)) {
-        tagHours[tag.id] = tagHours[tag.id]! + hours;
-      } else {
-        tagHours[tag.id] = hours;
-      }
+    // Find oldest and latest timelog timestamp
+    if (timelog.startTime < oldestTimelogTimestamp) {
+      oldestTimelogTimestamp = timelog.startTime;
+    }
+    if (timelog.endTime > latestTimelogTimestamp) {
+      latestTimelogTimestamp = timelog.endTime;
     }
 
-    if (groupByDay.containsKey(dateString)) {
-      groupByDay[dateString]!.totalHours += hours;
-      for (var id in tagHours.keys) {
-        if (groupByDay[dateString]!.tagHours.containsKey(id)) {
-          groupByDay[dateString]!.tagHours[id] =
-              groupByDay[dateString]!.tagHours[id]! + tagHours[id]!;
-        } else {
-          groupByDay[dateString]!.tagHours[id] = tagHours[id]!;
-        }
+    // Group by day
+    if (!groupByDay.containsKey(dayKey)) {
+      groupByDay[dayKey] =
+          MomentHours(moment: dayKey, totalHours: 0, taskHours: {});
+    }
+    groupByDay[dayKey]!.totalHours += hours;
+    if (timelog.task.value != null) {
+      if (!groupByDay[dayKey]!.taskHours.containsKey(timelog.task.value!.id)) {
+        groupByDay[dayKey]!.taskHours[timelog.task.value!.id] = 0;
       }
+      groupByDay[dayKey]!.taskHours[timelog.task.value!.id] =
+          groupByDay[dayKey]!.taskHours[timelog.task.value!.id]! + hours;
+    }
+
+    // Group by month
+    if (!groupByMonth.containsKey(monthKey)) {
+      groupByMonth[monthKey] =
+          MomentHours(moment: monthKey, totalHours: 0, taskHours: {});
+    }
+    groupByMonth[monthKey]!.totalHours += hours;
+    if (timelog.task.value != null) {
+      if (!groupByMonth[monthKey]!
+          .taskHours
+          .containsKey(timelog.task.value!.id)) {
+        groupByMonth[monthKey]!.taskHours[timelog.task.value!.id] = 0;
+      }
+      groupByMonth[monthKey]!.taskHours[timelog.task.value!.id] =
+          groupByMonth[monthKey]!.taskHours[timelog.task.value!.id]! + hours;
+    }
+  }
+
+  // Get the start and end date to loop between
+  DateTime startDate =
+      DateTime.fromMillisecondsSinceEpoch(oldestTimelogTimestamp)
+          .getDate
+          .getStartOfTheWeek;
+
+  DateTime endDate = DateTime.fromMillisecondsSinceEpoch(latestTimelogTimestamp)
+      .getDate
+      .getEndOfTheWeek;
+
+  // Days in week
+  List<MomentHours> week = [];
+
+  for (var currentDate = endDate;
+      currentDate.millisecondsSinceEpoch >= startDate.millisecondsSinceEpoch;
+      currentDate = currentDate.subtract(const Duration(days: 1))) {
+    if (week.length == 7) {
+      daysInWeeks.add(week.reversed.toList());
+      week = [];
+    }
+    final dateTimeString = currentDate.toDateString();
+    if (groupByDay.containsKey(dateTimeString)) {
+      week.add(groupByDay[dateTimeString]!);
     } else {
-      groupByDay[dateString] = MomentHours(
-        moment: dateString,
-        totalHours: hours,
-        tagHours: tagHours,
-      );
+      week.add(
+          MomentHours(moment: dateTimeString, totalHours: 0, taskHours: {}));
     }
   }
 
-  for (var i = 0; i < 365; i++) {
-    final dateString =
-        DateTime.now().subtract(Duration(days: i)).toDateString();
-    var moment = MomentHours(moment: dateString, totalHours: 0, tagHours: {});
-    if (groupByDay.containsKey(dateString)) {
-      moment = groupByDay[dateString]!;
-    }
-    result.add(moment);
-  }
+  // Months in Quater
+  List<MomentHours> quater = [];
 
-  return result;
+  // Go over each day form latest and oldest month and store MomentHours in monthsInQuaters
+
+  return (daysInWeeks.reversed.toList(), monthsInQuaters);
 }
 
-List<MomentHours> getWeeklyHours(List<Timelog> timelogs) {
-  List<MomentHours> result = [];
-  Map<String, MomentHours> groupByDay = {};
+int roundToNearestMultipleOf5(int number) {
+  // Calculate the remainder when divided by 5
+  int remainder = number % 5;
 
-  for (var timelog in timelogs) {
-    var dateTime = DateTime.fromMillisecondsSinceEpoch(timelog.startTime);
-
-    String month = dateTime.toDateString().split(' ')[0];
-    String year = dateTime.year.toString().substring(2, 4);
-    int week = dateTime.weekOfMonth;
-    var key = "${week}w $month, '$year";
-
-    final hours = getTimelogHours(timelog);
-
-    Map<Id, double> tagHours = {};
-    for (var tag in timelog.task.value!.tags) {
-      if (tagHours.containsKey(tag.id)) {
-        tagHours[tag.id] = tagHours[tag.id]! + hours;
-      } else {
-        tagHours[tag.id] = hours;
-      }
-    }
-
-    if (groupByDay.containsKey(key)) {
-      groupByDay[key]!.totalHours += hours;
-      for (var id in tagHours.keys) {
-        if (groupByDay[key]!.tagHours.containsKey(id)) {
-          groupByDay[key]!.tagHours[id] =
-              groupByDay[key]!.tagHours[id]! + tagHours[id]!;
-        } else {
-          groupByDay[key]!.tagHours[id] = tagHours[id]!;
-        }
-      }
-    } else {
-      groupByDay[key] = MomentHours(
-        moment: key,
-        totalHours: hours,
-        tagHours: tagHours,
-      );
-    }
-  }
-
-  for (var i = 0; i < 365; i++) {
-    final dateTime = DateTime.now().subtract(Duration(days: i));
-
-    String month = dateTime.toDateString().split(' ')[0];
-    String year = dateTime.year.toString().substring(2, 4);
-    int week = dateTime.weekOfMonth;
-
-    var key = "${week}w $month, '$year";
-    var moment = MomentHours(moment: key, totalHours: 0, tagHours: {});
-    if (groupByDay.containsKey(key)) {
-      moment = groupByDay[key]!;
-    }
-    if (result.isEmpty || result.last.moment != key) {
-      result.add(moment);
-    }
-  }
-
-  return result;
-}
-
-List<MomentHours> getMonthlyHours(List<Timelog> timelogs) {
-  List<MomentHours> result = [];
-  Map<String, MomentHours> groupByDay = {};
-
-  for (var timelog in timelogs) {
-    var dateTime = DateTime.fromMillisecondsSinceEpoch(timelog.startTime);
-
-    String month = dateTime.toDateString().split(' ')[0];
-    String year = dateTime.year.toString().substring(2, 4);
-
-    var key = "$month '$year";
-
-    final hours = getTimelogHours(timelog);
-
-    Map<Id, double> tagHours = {};
-    for (var tag in timelog.task.value!.tags) {
-      if (tagHours.containsKey(tag.id)) {
-        tagHours[tag.id] = tagHours[tag.id]! + hours;
-      } else {
-        tagHours[tag.id] = hours;
-      }
-    }
-
-    if (groupByDay.containsKey(key)) {
-      groupByDay[key]!.totalHours += hours;
-      for (var id in tagHours.keys) {
-        if (groupByDay[key]!.tagHours.containsKey(id)) {
-          groupByDay[key]!.tagHours[id] =
-              groupByDay[key]!.tagHours[id]! + tagHours[id]!;
-        } else {
-          groupByDay[key]!.tagHours[id] = tagHours[id]!;
-        }
-      }
-    } else {
-      groupByDay[key] = MomentHours(
-        moment: key,
-        totalHours: hours,
-        tagHours: tagHours,
-      );
-    }
-  }
-
-  for (var i = 0; i < 12 * 3; i++) {
-    final dateTime = DateTime.now().subtract(Duration(days: i * 30));
-
-    String month = dateTime.toDateString().split(' ')[0];
-    String year = dateTime.year.toString().substring(2, 4);
-
-    var key = "$month '$year";
-    var moment = MomentHours(moment: key, totalHours: 0, tagHours: {});
-    if (groupByDay.containsKey(key)) {
-      moment = groupByDay[key]!;
-    }
-    if (result.isEmpty || result.last.moment != key) {
-      result.add(moment);
-    }
-  }
-
-  return result;
-}
-
-String formatHours(double hours) {
-  int hoursInt = hours.floor();
-  int minutes = ((hours - hoursInt) * 60).round();
-
-  String result = '$hoursInt hour';
-  if (hoursInt != 1) {
-    result += 's';
-  }
-
-  if (minutes > 0) {
-    result += ' $minutes minute';
-    if (minutes != 1) {
-      result += 's';
-    }
-  }
-
-  return result;
-}
-
-int weeksBetween(DateTime from, DateTime to) {
-  from = DateTime.utc(from.year, from.month, from.day);
-  to = DateTime.utc(to.year, to.month, to.day);
-  return (to.difference(from).inDays / 7).ceil();
+  // If the remainder is less than 3, round down; otherwise, round up.
+  return number + (5 - remainder);
 }

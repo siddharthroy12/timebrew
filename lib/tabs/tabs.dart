@@ -111,7 +111,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                           },
                           labelType: NavigationRailLabelType.all,
                           leading: Padding(
-                            padding: const EdgeInsets.only(top: 5.0),
+                            padding: const EdgeInsets.only(top: 10.0),
                             child: SizedBox(
                               height: 45.0,
                               width: 45.0,
@@ -151,16 +151,13 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                 ]
               : [],
           Expanded(
-            child: IndexedStack(
-              index: _tabIndex,
-              children: const [
-                Timer(),
-                Timelogs(),
-                Tasks(),
-                Tags(),
-                Stats(),
-              ],
-            ),
+            child: const [
+              Timer(),
+              Timelogs(),
+              Tasks(),
+              Tags(),
+              Stats(),
+            ][_tabIndex],
           ),
         ],
       ),
