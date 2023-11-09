@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 enum GroupBy { daysInMonth, weeksInMonth }
 
@@ -135,23 +137,36 @@ class _StatsState extends State<Stats> {
   Widget build(BuildContext context) {
     String moment = '';
     String timeSpent = '';
+    Widget? chart;
     if (daysInWeeks.isNotEmpty && daysInWeeks[outerIndex].isNotEmpty) {
       moment = daysInWeeks[outerIndex][innerIndex].moment;
       timeSpent = millisecondsToReadable(
           hoursToMilliseconds(daysInWeeks[outerIndex][innerIndex].totalHours));
+      chart = MomentPieChart(
+        momentHours: daysInWeeks[outerIndex][innerIndex],
+      );
     }
     return ListView(
       children: [
+        SizedBox(
+          height: 300,
+          child: Stack(
+            children: [
+              chart ?? Container(),
+              Center(
+                child: Text(
+                  timeSpent,
+                  style: const TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
         const SizedBox(
           height: 20,
         ),
-        Center(
-            child: Text(
-          timeSpent,
-          style: const TextStyle(
-            fontSize: 25,
-          ),
-        )),
         const SizedBox(
           height: 20,
         ),
@@ -241,6 +256,76 @@ class _StatsState extends State<Stats> {
               return Container();
             }
           },
+        )
+      ],
+    );
+  }
+}
+
+class MomentPieChart extends StatefulWidget {
+  final MomentHours momentHours;
+
+  const MomentPieChart({super.key, required this.momentHours});
+
+  @override
+  State<MomentPieChart> createState() => _MomentPieChartState();
+}
+
+class _MomentPieChartState extends State<MomentPieChart> {
+  final isar = IsarService();
+  Map<Id, String> names = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateNames();
+  }
+
+  @override
+  void didUpdateWidget(covariant MomentPieChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _calculateNames();
+  }
+
+  void _calculateNames() {
+    for (var element in widget.momentHours.taskHours.entries) {
+      isar.getTaskById(element.key).then((value) {
+        setState(() {
+          names[element.key] = value?.name ?? 'dsf';
+        });
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SfCircularChart(
+      palette: const [
+        Colors.orange,
+        Colors.red,
+        Colors.brown,
+        Colors.green,
+        Colors.indigo,
+        Colors.purple,
+        Colors.teal
+      ],
+      series: [
+        DoughnutSeries(
+          animationDuration: 500,
+          radius: '60%',
+          innerRadius: '90%',
+          dataSource: widget.momentHours.taskHours.entries.toList(),
+          xValueMapper: (var data, _) => data.key,
+          yValueMapper: (var data, _) => data.value,
+          dataLabelMapper: (var data, _) => names[data.key] ?? '',
+          dataLabelSettings: const DataLabelSettings(
+            isVisible: true,
+            textStyle: TextStyle(color: Colors.white),
+            alignment: ChartAlignment.far,
+            labelAlignment: ChartDataLabelAlignment.outer,
+            labelPosition: ChartDataLabelPosition.outside,
+            connectorLineSettings: ConnectorLineSettings(),
+          ),
         )
       ],
     );

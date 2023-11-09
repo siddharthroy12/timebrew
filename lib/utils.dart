@@ -46,13 +46,13 @@ String millisecondsToReadable(int milliseconds) {
     result += "$days day ";
   }
   if (hours > 0) {
-    result += "$hours hour ";
+    result += "$hours hr ";
   }
   if (minutes > 0) {
-    result += "$minutes minute ";
+    result += "$minutes min ";
   }
   if (seconds > 0 && minutes == 0) {
-    result += "$seconds second";
+    result += "$seconds sec";
   }
 
   final trim = result.trim();
