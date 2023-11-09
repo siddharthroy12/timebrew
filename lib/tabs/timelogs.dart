@@ -109,7 +109,7 @@ class TimelogEntry extends StatelessWidget {
   final int milliseconds;
   final bool running;
 
-  TimelogEntry({
+  const TimelogEntry({
     super.key,
     required this.id,
     required this.running,
@@ -217,7 +217,7 @@ class TimelogEntry extends StatelessWidget {
                       itemBuilder: (BuildContext context) => <PopupMenuEntry>[
                         PopupMenuItem(
                           value: 'edit',
-                          child: const Text('Edit'),
+                          enabled: !running,
                           onTap: () {
                             showDialog<void>(
                               context: context,
@@ -228,10 +228,11 @@ class TimelogEntry extends StatelessWidget {
                               },
                             );
                           },
+                          child: const Text('Edit'),
                         ),
                         PopupMenuItem(
                           value: 'delete',
-                          child: const Text('Delete'),
+                          enabled: !running,
                           onTap: () {
                             showDialog<void>(
                               context: context,
@@ -255,6 +256,7 @@ class TimelogEntry extends StatelessWidget {
                               },
                             );
                           },
+                          child: const Text('Delete'),
                         ),
                       ],
                     )
