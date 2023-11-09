@@ -148,6 +148,9 @@ class _StatsState extends State<Stats> {
     }
     return ListView(
       children: [
+        const SizedBox(
+          height: 20,
+        ),
         Center(
             child: Text(
           timeSpent,

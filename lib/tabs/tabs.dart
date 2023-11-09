@@ -90,7 +90,12 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
       appBar: !desktopView
           ? AppBar(
               title: Text(tabs[_tabIndex].title),
-              actions: [settingsButton],
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: settingsButton,
+                )
+              ],
             )
           : null,
       body: Row(
@@ -99,51 +104,53 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
               ? [
                   Stack(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 45.0),
-                        child: NavigationRail(
-                          selectedIndex: _tabIndex,
-                          groupAlignment: 0,
-                          onDestinationSelected: (int index) {
-                            setState(() {
-                              _tabIndex = index;
-                            });
-                          },
-                          labelType: NavigationRailLabelType.all,
-                          leading: Padding(
-                            padding: const EdgeInsets.only(top: 10.0),
-                            child: SizedBox(
-                              height: 45.0,
-                              width: 45.0,
-                              child: FittedBox(
-                                child: FloatingActionButton(
-                                  elevation: 0,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(10),
-                                    ),
-                                  ),
-                                  onPressed: _action,
-                                  child: const Icon(Icons.add),
-                                ),
+                      NavigationRail(
+                        selectedIndex: _tabIndex,
+                        groupAlignment: 0,
+                        onDestinationSelected: (int index) {
+                          setState(() {
+                            _tabIndex = index;
+                          });
+                        },
+                        labelType: NavigationRailLabelType.all,
+                        destinations: tabs
+                            .map(
+                              (e) => NavigationRailDestination(
+                                icon: Icon(e.icon),
+                                label: Text(e.title),
                               ),
-                            ),
-                          ),
-                          destinations: tabs
-                              .map(
-                                (e) => NavigationRailDestination(
-                                  icon: Icon(e.icon),
-                                  label: Text(e.title),
-                                ),
-                              )
-                              .toList(),
-                        ),
+                            )
+                            .toList(),
                       ),
                       Positioned(
                         bottom: 20,
                         left: 0,
                         right: 0,
                         child: Center(child: settingsButton),
+                      ),
+                      Positioned(
+                        top: 20,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                            child: _tabIndex < 4
+                                ? SizedBox(
+                                    height: 45.0,
+                                    width: 45.0,
+                                    child: FittedBox(
+                                      child: FloatingActionButton(
+                                        elevation: 0,
+                                        shape: const RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(10),
+                                          ),
+                                        ),
+                                        onPressed: _action,
+                                        child: const Icon(Icons.add),
+                                      ),
+                                    ),
+                                  )
+                                : Container()),
                       ),
                     ],
                   ),
