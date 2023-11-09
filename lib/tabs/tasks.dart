@@ -68,7 +68,6 @@ class TaskEntry extends StatelessWidget {
   final int id;
   final int milliseconds;
   final List<Tag> tags;
-  final isar = IsarService();
 
   TaskEntry({
     super.key,
@@ -148,6 +147,8 @@ class TaskEntry extends StatelessWidget {
                   return ConfirmDeleteDialog(
                     description: 'Are you sure you want to delete $name',
                     onConfirm: () {
+                      final isar = IsarService();
+
                       isar.deleteTask(id, false);
 
                       final snackBar = SnackBar(

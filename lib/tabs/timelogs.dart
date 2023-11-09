@@ -108,7 +108,6 @@ class TimelogEntry extends StatelessWidget {
   final int endTime;
   final int milliseconds;
   final bool running;
-  final isar = IsarService();
 
   TimelogEntry({
     super.key,
@@ -241,6 +240,8 @@ class TimelogEntry extends StatelessWidget {
                                   description:
                                       'Are you sure you want to delete this timelog for task "$task"',
                                   onConfirm: () {
+                                    final isar = IsarService();
+
                                     isar.deleteTimelog(id);
 
                                     const snackBar = SnackBar(

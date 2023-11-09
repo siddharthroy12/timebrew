@@ -78,7 +78,6 @@ class TagEntry extends StatelessWidget {
   final int id;
   final int milliseconds;
   final Color color;
-  final isar = IsarService();
 
   TagEntry({
     super.key,
@@ -154,6 +153,8 @@ class TagEntry extends StatelessWidget {
                   return ConfirmDeleteDialog(
                     description: 'Are you sure you want to delete $name',
                     onConfirm: () {
+                      final isar = IsarService();
+
                       isar.deleteTag(id);
 
                       final snackBar = SnackBar(
