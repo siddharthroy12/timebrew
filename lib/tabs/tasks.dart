@@ -69,7 +69,7 @@ class TaskEntry extends StatelessWidget {
   final int milliseconds;
   final List<Tag> tags;
 
-  TaskEntry({
+  const TaskEntry({
     super.key,
     required this.name,
     required this.id,

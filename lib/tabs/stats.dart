@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 enum GroupBy { daysInMonth, weeksInMonth }
 
@@ -19,6 +20,7 @@ class _StatsState extends State<Stats> {
   int outerIndex = 0;
   int innerIndex = 0;
   GroupBy groupBy = GroupBy.weeksInMonth;
+  final PageController _controller = PageController();
 
   @override
   void initState() {
@@ -31,6 +33,9 @@ class _StatsState extends State<Stats> {
           int finalInnerIndex = 0;
 
           outerIndex = daysInWeeks.length - 1;
+          _controller.jumpToPage(
+            outerIndex,
+          );
 
           for (var i = 0; i < daysInWeeks[outerIndex].length; i++) {
             if (daysInWeeks[outerIndex][i].totalHours != 0) {
@@ -50,13 +55,6 @@ class _StatsState extends State<Stats> {
       if (innerIndex == daysInWeeks[outerIndex].length - 1) {
         if (outerIndex < daysInWeeks.length - 1) {
           outerIndex += 1;
-          int finalInnerIndex = daysInWeeks[outerIndex].length - 1;
-          for (var i = finalInnerIndex; i > 0; i--) {
-            if (daysInWeeks[outerIndex][i].totalHours != 0) {
-              finalInnerIndex = i;
-            }
-          }
-          innerIndex = finalInnerIndex;
         }
       } else {
         if (innerIndex < daysInWeeks[outerIndex].length - 1) {
@@ -83,6 +81,11 @@ class _StatsState extends State<Stats> {
           }
         }
       }
+      _controller.animateToPage(
+        outerIndex,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.linear,
+      );
     });
   }
 
@@ -91,15 +94,6 @@ class _StatsState extends State<Stats> {
       if (innerIndex == 0) {
         if (outerIndex > 0) {
           outerIndex -= 1;
-          int finalInnerIndex = 0;
-          for (var i = finalInnerIndex;
-              i < daysInWeeks[outerIndex].length;
-              i++) {
-            if (daysInWeeks[outerIndex][i].totalHours != 0) {
-              finalInnerIndex = i;
-            }
-          }
-          innerIndex = finalInnerIndex;
         }
       } else {
         if (innerIndex > 0) {
@@ -129,17 +123,20 @@ class _StatsState extends State<Stats> {
           }
         }
       }
+      _controller.animateToPage(
+        outerIndex,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.linear,
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     String moment = '';
-    List<MomentHours> moments = [];
     String timeSpent = '';
     if (daysInWeeks.isNotEmpty && daysInWeeks[outerIndex].isNotEmpty) {
       moment = daysInWeeks[outerIndex][innerIndex].moment;
-      moments = daysInWeeks[outerIndex];
       timeSpent = millisecondsToReadable(
           hoursToMilliseconds(daysInWeeks[outerIndex][innerIndex].totalHours));
     }
@@ -177,18 +174,59 @@ class _StatsState extends State<Stats> {
           height: 20,
         ),
         SizedBox(
-          height: 150,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: BarChart(
-              moments: moments,
-              selectedMoment: innerIndex,
-              onSelectedMomentChange: (moment) {
+          height: 150, // Card height
+          child: PageView.builder(
+            itemCount: daysInWeeks.length,
+            controller: _controller,
+            onPageChanged: (value) {
+              if (outerIndex < value) {
                 setState(() {
-                  innerIndex = moment;
+                  outerIndex = value;
+
+                  int finalInnerIndex = daysInWeeks[outerIndex].length - 1;
+                  for (var i = finalInnerIndex; i > 0; i--) {
+                    if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                      finalInnerIndex = i;
+                    }
+                  }
+                  innerIndex = finalInnerIndex;
                 });
-              },
-            ),
+              } else if (outerIndex > value) {
+                setState(() {
+                  outerIndex = value;
+                  int finalInnerIndex = 0;
+                  for (var i = finalInnerIndex;
+                      i < daysInWeeks[outerIndex].length;
+                      i++) {
+                    if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                      finalInnerIndex = i;
+                    }
+                  }
+                  innerIndex = finalInnerIndex;
+                });
+              }
+            },
+            itemBuilder: (context, index) {
+              return ListenableBuilder(
+                listenable: _controller,
+                builder: (context, child) {
+                  List<MomentHours> moments = daysInWeeks[index];
+
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: BarChart(
+                      moments: moments,
+                      selectedMoment: outerIndex == index ? innerIndex : -1,
+                      onSelectedMomentChange: (moment) {
+                        setState(() {
+                          innerIndex = moment;
+                        });
+                      },
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ),
         const SizedBox(
@@ -265,10 +303,10 @@ class _MomentTasksState extends State<MomentTasks> {
 class BarChart extends StatefulWidget {
   final List<MomentHours> moments;
   final Function(int) onSelectedMomentChange;
-  final int selectedMoment;
+  final int? selectedMoment;
   const BarChart({
     super.key,
-    required this.selectedMoment,
+    this.selectedMoment,
     required this.moments,
     required this.onSelectedMomentChange,
   });
