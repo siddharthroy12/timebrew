@@ -17,7 +17,9 @@ class CreateTimelogDialog extends StatefulWidget {
 
 class _CreateTimelogDialogState extends State<CreateTimelogDialog> {
   Task? _task;
-  int _startTime = DateTime.now().millisecondsSinceEpoch;
+  int _startTime = DateTime.now()
+      .subtract(const Duration(minutes: 30))
+      .millisecondsSinceEpoch;
   int _endTime = DateTime.now().millisecondsSinceEpoch;
   final _isar = IsarService();
   final _descriptionFieldController = TextEditingController();

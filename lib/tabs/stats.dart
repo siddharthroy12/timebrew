@@ -1,7 +1,4 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
