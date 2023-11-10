@@ -1,70 +1,85 @@
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/models/tag.dart';
-import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/popups/create_tag.dart';
 import 'package:timebrew/utils.dart';
 
 class Tags extends StatefulWidget {
-  const Tags({super.key});
+  final String searchString;
+
+  const Tags({
+    super.key,
+    required this.searchString,
+  });
 
   @override
   State<Tags> createState() => _TagsState();
 }
 
-class _TagsState extends State<Tags> with AutomaticKeepAliveClientMixin {
-  final isar = IsarService();
+class _TagsState extends State<Tags> {
+  final _isar = IsarService();
+  final Map<Id, int> _millisecondsOnTags = {};
+  List<Tag> _tags = [];
+  bool _isLoading = true;
 
   @override
-  bool get wantKeepAlive => true; //Set to true
+  void initState() {
+    super.initState();
+    _isar.getTagStream().listen((tags) {
+      setState(() {
+        _tags = tags;
+        _isLoading = false;
+      });
+    });
+
+    _isar.getTimelogStream().first.then((timelogs) {
+      setState(() {
+        for (var timelog in timelogs) {
+          final milliseconds = timelog.endTime - timelog.startTime;
+          if (timelog.task.value != null) {
+            for (var tag in timelog.task.value!.tags) {
+              if (_millisecondsOnTags.containsKey(tag.id)) {
+                _millisecondsOnTags[tag.id] =
+                    _millisecondsOnTags[tag.id]! + milliseconds;
+              } else {
+                _millisecondsOnTags[tag.id] = milliseconds;
+              }
+            }
+          }
+        }
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    return StreamBuilder(
-      stream: isar.getTaskStream(),
-      builder: (context, snapshot) {
-        return StreamBuilder(
-          stream: isar.getTimelogStream(),
-          builder: (context, snapshot) {
-            return StreamBuilder<List<Tag>>(
-              initialData: const [],
-              stream: isar.getTagStream(),
-              builder: (context, snapshot) {
-                return ListView.separated(
-                  itemCount: snapshot.data!.length,
-                  separatorBuilder: (context, index) {
-                    return Container();
-                  },
-                  itemBuilder: (BuildContext context, int index) {
-                    Tag tag = snapshot.data![index];
-                    return StreamBuilder<List<Timelog>>(
-                      initialData: const [],
-                      stream: isar.getTagTimelogStream(tag.id),
-                      builder: (context, snapshot) {
-                        int milliseconds = 0;
-                        if (snapshot.data!.isNotEmpty) {
-                          milliseconds = snapshot.data!
-                              .map((timelog) =>
-                                  timelog.endTime - timelog.startTime)
-                              .reduce((value, element) => value + element);
-                        }
-                        return TagEntry(
-                          name: tag.name,
-                          id: tag.id,
-                          milliseconds: milliseconds,
-                          color: HexColor.fromHex(tag.color),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            );
-          },
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    final filteredList = _tags
+        .where(
+          (element) => element.name.toLowerCase().contains(
+                widget.searchString.toLowerCase(),
+              ),
+        )
+        .toList();
+    return ListView.separated(
+      itemCount: filteredList.length,
+      separatorBuilder: (context, index) {
+        return Container();
+      },
+      itemBuilder: (BuildContext context, int index) {
+        Tag tag = filteredList[index];
+        return TagEntry(
+          name: tag.name,
+          id: tag.id,
+          milliseconds: _millisecondsOnTags[tag.id] ?? 0,
+          color: HexColor.fromHex(tag.color),
         );
       },
     );

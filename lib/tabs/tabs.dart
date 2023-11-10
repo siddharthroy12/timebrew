@@ -28,8 +28,10 @@ class Tabs extends StatefulWidget {
 
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   int _tabIndex = 0;
-  bool desktopView = true;
-  bool searchMode = false;
+  bool _desktopView = true;
+  bool _searchMode = false;
+  final TextEditingController _searchInputController = TextEditingController();
+  String _searchString = "";
 
   List<TabEntry> tabs = [
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
@@ -42,6 +44,14 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+  }
+
+  void _toggleSearchMode() {
+    setState(() {
+      _searchString = "";
+      _searchInputController.text = "";
+      _searchMode = !_searchMode;
+    });
   }
 
   void _showAction(BuildContext context, Dialog dialog) {
@@ -76,7 +86,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    desktopView = MediaQuery.of(context).size.width > 500;
+    _desktopView = MediaQuery.of(context).size.width > 500;
     final settingsButton = IconButton(
       onPressed: () {
         Navigator.of(context).push(
@@ -89,7 +99,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     );
     return Row(
       children: [
-        ...desktopView
+        ..._desktopView
             ? [
                 Card(
                   margin: EdgeInsets.zero,
@@ -104,6 +114,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                       setState(() {
                         _tabIndex = index;
                       });
+                      _toggleSearchMode();
                     },
                     labelType: NavigationRailLabelType.all,
                     destinations: tabs
@@ -121,22 +132,24 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
         Expanded(
           child: Scaffold(
             appBar: AppBar(
-              leading: searchMode
+              leading: _searchMode
                   ? IconButton(
-                      onPressed: () {
-                        setState(() {
-                          searchMode = false;
-                        });
-                      },
+                      onPressed: _toggleSearchMode,
                       icon: const Icon(
                         Icons.arrow_back,
                       ),
                     )
                   : null,
-              title: searchMode
-                  ? const TextField(
+              title: _searchMode
+                  ? TextField(
+                      controller: _searchInputController,
+                      onEditingComplete: () {
+                        setState(() {
+                          _searchString = _searchInputController.text;
+                        });
+                      },
                       autofocus: true,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Search...',
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -146,43 +159,38 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                     )
                   : Text(tabs[_tabIndex].title),
               actions: [
-                !searchMode
+                !_searchMode && _tabIndex > 1 && _tabIndex < 4
                     ? IconButton(
-                        onPressed: () {
-                          setState(() {
-                            searchMode = true;
-                          });
-                        },
+                        onPressed: _toggleSearchMode,
                         icon: Icon(
-                          searchMode ? Icons.cancel : Icons.search_rounded,
+                          _searchMode ? Icons.cancel : Icons.search_rounded,
                         ),
                       )
                     : Container(),
-                IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    Icons.filter_list_rounded,
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: settingsButton,
                 )
               ],
             ),
-            body: const [
-              Timer(),
-              Timelogs(),
-              Tasks(),
-              Tags(),
-              Stats(),
+            body: [
+              const Timer(),
+              const Timelogs(),
+              Tasks(
+                searchString: _searchString,
+              ),
+              Tags(
+                searchString: _searchString,
+              ),
+              const Stats(),
             ][_tabIndex],
-            bottomNavigationBar: !desktopView
+            bottomNavigationBar: !_desktopView
                 ? NavigationBar(
                     onDestinationSelected: (int index) {
                       setState(() {
                         _tabIndex = index;
                       });
+                      _toggleSearchMode();
                     },
                     selectedIndex: _tabIndex,
                     destinations: tabs

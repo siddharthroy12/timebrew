@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/models/task.dart';
-import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/services/isar_service.dart';
@@ -10,53 +10,82 @@ import 'package:timebrew/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class Tasks extends StatefulWidget {
-  const Tasks({super.key});
+  final String searchString;
+  const Tasks({super.key, required this.searchString});
 
   @override
   State<Tasks> createState() => _TasksState();
 }
 
-class _TasksState extends State<Tasks> with AutomaticKeepAliveClientMixin {
-  final isar = IsarService();
+class _TasksState extends State<Tasks> {
+  final _isar = IsarService();
+  final Map<Id, int> _millisecondsOnTasks = {};
+  List<Task> _tasks = [];
+  bool _isLoading = true;
 
   @override
-  bool get wantKeepAlive => true; //Set to true
+  void initState() {
+    super.initState();
+    _isar.getTaskStream().listen((tasks) {
+      setState(() {
+        _tasks = tasks;
+        _isLoading = false;
+      });
+    });
+
+    _isar.getTimelogStream().first.then((timelogs) {
+      setState(() {
+        for (var timelog in timelogs) {
+          final milliseconds = timelog.endTime - timelog.startTime;
+
+          if (timelog.task.value != null) {
+            if (_millisecondsOnTasks.containsKey(timelog.task.value!.id)) {
+              _millisecondsOnTasks[timelog.task.value!.id] =
+                  _millisecondsOnTasks[timelog.task.value!.id]! + milliseconds;
+            } else {
+              _millisecondsOnTasks[timelog.task.value!.id] = milliseconds;
+            }
+          }
+        }
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    return StreamBuilder<List<Task>>(
-      initialData: const [],
-      stream: isar.getTaskStream(),
-      builder: (context, snapshot) {
-        return ListView.separated(
-          itemCount: snapshot.data!.length,
-          separatorBuilder: (context, index) {
-            return Container();
-          },
-          itemBuilder: (BuildContext context, int index) {
-            Task task = snapshot.data![index];
-            return StreamBuilder<List<Timelog>>(
-              initialData: const [],
-              stream: isar.getTaskTimelogStream(task.id),
-              builder: (context, snapshot) {
-                int milliseconds = 0;
-                if (snapshot.data!.isNotEmpty) {
-                  milliseconds = snapshot.data!
-                      .map((timelog) => timelog.endTime - timelog.startTime)
-                      .reduce((value, element) => value + element);
-                }
-                return TaskEntry(
-                  name: task.name,
-                  id: task.id,
-                  milliseconds: milliseconds,
-                  tags: task.tags.toList(),
-                  link: task.link,
-                );
-              },
-            );
-          },
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    final filteredList = _tasks
+        .where(
+          (element) =>
+              element.name.toLowerCase().contains(
+                    widget.searchString.toLowerCase(),
+                  ) ||
+              element.tags
+                  .where(
+                    (element) => element.name.toLowerCase().contains(
+                          widget.searchString.toLowerCase(),
+                        ),
+                  )
+                  .isNotEmpty,
+        )
+        .toList();
+    return ListView.separated(
+      itemCount: filteredList.length,
+      separatorBuilder: (context, index) {
+        return Container();
+      },
+      itemBuilder: (BuildContext context, int index) {
+        Task task = filteredList[index];
+        return TaskEntry(
+          name: task.name,
+          id: task.id,
+          milliseconds: _millisecondsOnTasks[task.id] ?? 0,
+          tags: task.tags.toList(),
+          link: task.link,
         );
       },
     );

@@ -180,7 +180,7 @@ class _StatsState extends State<Stats> {
             ),
             Text(
               moment,
-              style: TextStyle(fontSize: 20),
+              style: const TextStyle(fontSize: 18),
             ),
             IconButton(
               onPressed: _selectNextMoment,
