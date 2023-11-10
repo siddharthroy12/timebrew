@@ -439,7 +439,7 @@ class _BarChartState extends State<BarChart> {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      '${((maxHours / 5) * (5 - index)).toStringAsFixed(1)}h',
+                      '${((((4 - index) * maxHours) / maxHours)).toStringAsFixed(1)}h',
                       style: const TextStyle(fontSize: 9),
                     )
                   ],

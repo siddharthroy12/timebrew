@@ -46,11 +46,11 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     super.initState();
   }
 
-  void _toggleSearchMode() {
+  void _toggleSearchMode(bool searchMode) {
     setState(() {
       _searchString = "";
       _searchInputController.text = "";
-      _searchMode = !_searchMode;
+      _searchMode = searchMode;
     });
   }
 
@@ -114,7 +114,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                       setState(() {
                         _tabIndex = index;
                       });
-                      _toggleSearchMode();
+                      _toggleSearchMode(false);
                     },
                     labelType: NavigationRailLabelType.all,
                     destinations: tabs
@@ -134,7 +134,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             appBar: AppBar(
               leading: _searchMode
                   ? IconButton(
-                      onPressed: _toggleSearchMode,
+                      onPressed: () => _toggleSearchMode(false),
                       icon: const Icon(
                         Icons.arrow_back,
                       ),
@@ -161,7 +161,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
               actions: [
                 !_searchMode && _tabIndex > 1 && _tabIndex < 4
                     ? IconButton(
-                        onPressed: _toggleSearchMode,
+                        onPressed: () => _toggleSearchMode(true),
                         icon: Icon(
                           _searchMode ? Icons.cancel : Icons.search_rounded,
                         ),
@@ -190,7 +190,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                       setState(() {
                         _tabIndex = index;
                       });
-                      _toggleSearchMode();
+                      _toggleSearchMode(false);
                     },
                     selectedIndex: _tabIndex,
                     destinations: tabs
