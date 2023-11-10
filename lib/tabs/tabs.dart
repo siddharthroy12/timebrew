@@ -143,9 +143,9 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
               title: _searchMode
                   ? TextField(
                       controller: _searchInputController,
-                      onEditingComplete: () {
+                      onChanged: (text) {
                         setState(() {
-                          _searchString = _searchInputController.text;
+                          _searchString = text;
                         });
                       },
                       autofocus: true,
