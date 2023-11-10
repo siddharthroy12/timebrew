@@ -29,6 +29,7 @@ class Tabs extends StatefulWidget {
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   int _tabIndex = 0;
   bool desktopView = true;
+  bool searchMode = false;
 
   List<TabEntry> tabs = [
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
@@ -86,122 +87,133 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
       },
       icon: const Icon(Icons.settings_outlined),
     );
-    return Scaffold(
-      appBar: !desktopView
-          ? AppBar(
-              title: Text(tabs[_tabIndex].title),
+    return Row(
+      children: [
+        ...desktopView
+            ? [
+                Card(
+                  margin: EdgeInsets.zero,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.zero),
+                  ),
+                  child: NavigationRail(
+                    selectedIndex: _tabIndex,
+                    groupAlignment: 0,
+                    backgroundColor: Colors.transparent,
+                    onDestinationSelected: (int index) {
+                      setState(() {
+                        _tabIndex = index;
+                      });
+                    },
+                    labelType: NavigationRailLabelType.all,
+                    destinations: tabs
+                        .map(
+                          (e) => NavigationRailDestination(
+                            icon: Icon(e.icon),
+                            label: Text(e.title),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ]
+            : [],
+        Expanded(
+          child: Scaffold(
+            appBar: AppBar(
+              leading: searchMode
+                  ? IconButton(
+                      onPressed: () {
+                        setState(() {
+                          searchMode = false;
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.arrow_back,
+                      ),
+                    )
+                  : null,
+              title: searchMode
+                  ? const TextField(
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Search...',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    )
+                  : Text(tabs[_tabIndex].title),
               actions: [
+                !searchMode
+                    ? IconButton(
+                        onPressed: () {
+                          setState(() {
+                            searchMode = true;
+                          });
+                        },
+                        icon: Icon(
+                          searchMode ? Icons.cancel : Icons.search_rounded,
+                        ),
+                      )
+                    : Container(),
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.filter_list_rounded,
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: settingsButton,
                 )
               ],
-            )
-          : null,
-      body: Row(
-        children: [
-          ...desktopView
-              ? [
-                  Stack(
-                    children: [
-                      NavigationRail(
-                        selectedIndex: _tabIndex,
-                        groupAlignment: 0,
-                        onDestinationSelected: (int index) {
-                          setState(() {
-                            _tabIndex = index;
-                          });
-                        },
-                        labelType: NavigationRailLabelType.all,
-                        destinations: tabs
-                            .map(
-                              (e) => NavigationRailDestination(
-                                icon: Icon(e.icon),
-                                label: Text(e.title),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                      Positioned(
-                        bottom: 20,
-                        left: 0,
-                        right: 0,
-                        child: Center(child: settingsButton),
-                      ),
-                      Positioned(
-                        top: 20,
-                        left: 0,
-                        right: 0,
-                        child: Center(
-                            child: _tabIndex < 4
-                                ? SizedBox(
-                                    height: 45.0,
-                                    width: 45.0,
-                                    child: FittedBox(
-                                      child: FloatingActionButton(
-                                        elevation: 0,
-                                        shape: const RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.all(
-                                            Radius.circular(10),
-                                          ),
-                                        ),
-                                        onPressed: _action,
-                                        child: const Icon(Icons.add),
-                                      ),
-                                    ),
-                                  )
-                                : Container()),
-                      ),
-                    ],
-                  ),
-                  const VerticalDivider(thickness: 1, width: 1),
-                ]
-              : [],
-          Expanded(
-            child: const [
+            ),
+            body: const [
               Timer(),
               Timelogs(),
               Tasks(),
               Tags(),
               Stats(),
             ][_tabIndex],
-          ),
-        ],
-      ),
-      bottomNavigationBar: !desktopView
-          ? NavigationBar(
-              onDestinationSelected: (int index) {
-                setState(() {
-                  _tabIndex = index;
-                });
-              },
-              selectedIndex: _tabIndex,
-              destinations: tabs
-                  .map(
-                    (e) => NavigationDestination(
-                      icon: Icon(e.icon),
-                      label: e.title,
-                    ),
+            bottomNavigationBar: !desktopView
+                ? NavigationBar(
+                    onDestinationSelected: (int index) {
+                      setState(() {
+                        _tabIndex = index;
+                      });
+                    },
+                    selectedIndex: _tabIndex,
+                    destinations: tabs
+                        .map(
+                          (e) => NavigationDestination(
+                            icon: Icon(e.icon),
+                            label: e.title,
+                          ),
+                        )
+                        .toList(),
                   )
-                  .toList(),
-            )
-          : null,
-      floatingActionButton: Builder(
-        builder: (context) {
-          if (_tabIndex < 4 && !desktopView) {
-            return FloatingActionButton.extended(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              onPressed: _action,
-              label: Text(
-                  'Add ${_tabIndex == 0 ? "Task" : tabs[_tabIndex].title.substring(0, tabs[_tabIndex].title.length - 1)}'),
-              icon: const Icon(Icons.add_rounded),
-            );
-          }
-          return Container();
-        },
-      ),
+                : null,
+            floatingActionButton: Builder(
+              builder: (context) {
+                if (_tabIndex < 4) {
+                  return FloatingActionButton.extended(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    onPressed: _action,
+                    label: Text(
+                        'Create ${_tabIndex == 0 ? "Task" : tabs[_tabIndex].title.substring(0, tabs[_tabIndex].title.length - 1)}'),
+                    icon: const Icon(Icons.add_rounded),
+                  );
+                }
+                return Container();
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

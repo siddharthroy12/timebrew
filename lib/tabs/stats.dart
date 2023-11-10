@@ -178,7 +178,10 @@ class _StatsState extends State<Stats> {
               onPressed: _selectPreviousMoment,
               icon: const Icon(Icons.arrow_left),
             ),
-            Text(moment),
+            Text(
+              moment,
+              style: TextStyle(fontSize: 20),
+            ),
             IconButton(
               onPressed: _selectNextMoment,
               icon: const Icon(Icons.arrow_right),
@@ -366,13 +369,12 @@ class _MomentTasksState extends State<MomentTasks> {
                   return Column(
                     children: [
                       TaskEntry(
-                          name: task.name,
-                          id: task.id,
-                          milliseconds: hoursToMilliseconds(e.$1),
-                          tags: task.tags.toList()),
-                      const Divider(
-                        height: 0,
-                      )
+                        name: task.name,
+                        id: task.id,
+                        milliseconds: hoursToMilliseconds(e.$1),
+                        tags: task.tags.toList(),
+                        link: task.link,
+                      ),
                     ],
                   );
                 }

@@ -7,6 +7,7 @@ import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/utils.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class Tasks extends StatefulWidget {
   const Tasks({super.key});
@@ -32,9 +33,7 @@ class _TasksState extends State<Tasks> with AutomaticKeepAliveClientMixin {
         return ListView.separated(
           itemCount: snapshot.data!.length,
           separatorBuilder: (context, index) {
-            return const Divider(
-              height: 0,
-            );
+            return Container();
           },
           itemBuilder: (BuildContext context, int index) {
             Task task = snapshot.data![index];
@@ -53,6 +52,7 @@ class _TasksState extends State<Tasks> with AutomaticKeepAliveClientMixin {
                   id: task.id,
                   milliseconds: milliseconds,
                   tags: task.tags.toList(),
+                  link: task.link,
                 );
               },
             );
@@ -68,6 +68,7 @@ class TaskEntry extends StatelessWidget {
   final int id;
   final int milliseconds;
   final List<Tag> tags;
+  final String link;
 
   const TaskEntry({
     super.key,
@@ -75,6 +76,7 @@ class TaskEntry extends StatelessWidget {
     required this.id,
     required this.milliseconds,
     required this.tags,
+    required this.link,
   });
 
   @override
@@ -123,6 +125,13 @@ class TaskEntry extends StatelessWidget {
           : null,
       trailing: PopupMenuButton(
         itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+          PopupMenuItem(
+            value: 'openlink',
+            child: const Text('Open Link'),
+            onTap: () {
+              launchUrlString(link);
+            },
+          ),
           PopupMenuItem(
             value: 'edit',
             child: const Text('Edit'),

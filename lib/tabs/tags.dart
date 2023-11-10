@@ -37,9 +37,7 @@ class _TagsState extends State<Tags> with AutomaticKeepAliveClientMixin {
                 return ListView.separated(
                   itemCount: snapshot.data!.length,
                   separatorBuilder: (context, index) {
-                    return const Divider(
-                      height: 0,
-                    );
+                    return Container();
                   },
                   itemBuilder: (BuildContext context, int index) {
                     Tag tag = snapshot.data![index];
@@ -79,7 +77,7 @@ class TagEntry extends StatelessWidget {
   final int milliseconds;
   final Color color;
 
-  TagEntry({
+  const TagEntry({
     super.key,
     required this.name,
     required this.id,
