@@ -154,7 +154,7 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
                     color: MaterialStateProperty.resolveWith((states) {
                       return Theme.of(context).colorScheme.onSecondary;
                     }),
-                    label: const Text('Add tag'),
+                    label: const Text('Create tag'),
                     avatar: const Icon(Icons.add),
                     onPressed: () {
                       showDialog<void>(

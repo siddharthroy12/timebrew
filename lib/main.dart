@@ -44,18 +44,19 @@ ThemeData mixWithCommonTheme(ColorScheme colorSheme) {
         ),
       ),
     ),
-    inputDecorationTheme: const InputDecorationTheme(
+    inputDecorationTheme: InputDecorationTheme(
       isDense: true,
-      contentPadding: EdgeInsets.symmetric(
+      contentPadding: const EdgeInsets.symmetric(
         vertical: 18,
         horizontal: 15,
       ),
-      border: OutlineInputBorder(
+      border: const OutlineInputBorder(
         borderSide: BorderSide(width: 2),
       ),
       focusedBorder: OutlineInputBorder(
         borderSide: BorderSide(
           width: 2,
+          color: colorSheme.primary,
         ),
       ),
     ),
