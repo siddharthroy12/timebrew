@@ -114,13 +114,12 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     }
   }
 
-  void _showFilterSheet() {
-    if (_hasSpaceForRightPanel) {
-      setState(() {
-        _stickyFilterPanelOpen = !_stickyFilterPanelOpen;
-      });
-    } else {
-      SideSheet.right(
+  void _showFilterSheet() async {
+    setState(() {
+      _stickyFilterPanelOpen = !_stickyFilterPanelOpen;
+    });
+    if (!_hasSpaceForRightPanel) {
+      await SideSheet.right(
         transitionDuration: const Duration(milliseconds: 200),
         body: TagFilter(
           tags: _tags,
@@ -137,6 +136,9 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
         width: 250,
         context: context,
       );
+      setState(() {
+        _stickyFilterPanelOpen = false;
+      });
     }
   }
 
@@ -356,68 +358,71 @@ class _TagFilterState extends State<TagFilter> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    widget.onClose();
-                  },
-                  icon: const Icon(Icons.arrow_back_rounded),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                const Text(
-                  'Filter Tags',
-                  style: TextStyle(fontSize: 20),
-                )
-              ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8.0),
+                    child: Text(
+                      'Filter Tags',
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      widget.onClose();
+                    },
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: widget.tags.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.tags.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return ListTile(
+                      leading: Checkbox(
+                        value: !_selectedTags.containsValue(false),
+                        onChanged: (event) {
+                          if (event != null) {
+                            setState(() {
+                              for (var tag in widget.tags) {
+                                _selectedTags[tag.id] = event;
+                                widget.onTagSelectionChange(_selectedTags);
+                              }
+                            });
+                          }
+                        },
+                      ),
+                      title: const Text('Select all'),
+                    );
+                  }
                   return ListTile(
                     leading: Checkbox(
-                      value: !_selectedTags.containsValue(false),
+                      value: _selectedTags[widget.tags[index - 1].id] ?? false,
                       onChanged: (event) {
                         if (event != null) {
                           setState(() {
-                            for (var tag in widget.tags) {
-                              _selectedTags[tag.id] = event;
-                              widget.onTagSelectionChange(_selectedTags);
-                            }
+                            _selectedTags[widget.tags[index - 1].id] = event;
+                            widget.onTagSelectionChange(_selectedTags);
                           });
                         }
                       },
                     ),
-                    title: const Text('Select all'),
+                    title: Text(widget.tags[index - 1].name),
                   );
-                }
-                return ListTile(
-                  leading: Checkbox(
-                    value: _selectedTags[widget.tags[index - 1].id] ?? false,
-                    onChanged: (event) {
-                      if (event != null) {
-                        setState(() {
-                          _selectedTags[widget.tags[index - 1].id] = event;
-                          widget.onTagSelectionChange(_selectedTags);
-                        });
-                      }
-                    },
-                  ),
-                  title: Text(widget.tags[index - 1].name),
-                );
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
