@@ -166,9 +166,6 @@ class TaskEntry extends StatelessWidget {
                         ),
                         label: Text(
                           tag.name,
-                          style: const TextStyle(
-                            fontSize: 12,
-                          ),
                         ),
                       ),
                     )
