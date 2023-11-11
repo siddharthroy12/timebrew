@@ -21,7 +21,7 @@ class NoDataEmoji extends StatelessWidget {
           const SizedBox(
             height: 10,
           ),
-          const Text('No data found to show stats')
+          const Text('Nothing to show')
         ],
       ),
     );
