@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
+import 'package:side_sheet/side_sheet.dart';
+import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/popups/create_timelog.dart';
+import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/settings.dart';
 import 'package:timebrew/tabs/stats.dart';
 import 'package:timebrew/tabs/tags.dart';
@@ -27,11 +31,16 @@ class Tabs extends StatefulWidget {
 }
 
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
+  final _isar = IsarService();
   int _tabIndex = 0;
   bool _desktopView = true;
+  bool _hasSpaceForRightPanel = false;
   bool _searchMode = false;
   final TextEditingController _searchInputController = TextEditingController();
   String _searchString = "";
+  List<Tag> _tags = [];
+  Map<Id, bool> _selectedTags = {};
+  bool _stickyFilterPanelOpen = false;
 
   List<TabEntry> tabs = [
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
@@ -44,6 +53,27 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _loadTags();
+  }
+
+  void _loadTags() {
+    _isar.getTagStream().listen((value) {
+      setState(() {
+        for (var tag in value) {
+          if (!_selectedTags.containsKey(tag.id)) {
+            _selectedTags[tag.id] = true;
+          }
+        }
+        _tags = value;
+      });
+    });
+  }
+
+  void _onDestinationChange(int index) {
+    setState(() {
+      _tabIndex = index;
+    });
+    _toggleSearchMode(false);
   }
 
   void _toggleSearchMode(bool searchMode) {
@@ -84,9 +114,36 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     }
   }
 
+  void _showFilterSheet() {
+    if (_hasSpaceForRightPanel) {
+      setState(() {
+        _stickyFilterPanelOpen = !_stickyFilterPanelOpen;
+      });
+    } else {
+      SideSheet.right(
+        transitionDuration: const Duration(milliseconds: 200),
+        body: TagFilter(
+          tags: _tags,
+          initialSelectedTags: _selectedTags,
+          onTagSelectionChange: (selectedTags) {
+            setState(() {
+              _selectedTags = selectedTags;
+            });
+          },
+          onClose: () {
+            Navigator.pop(context);
+          },
+        ),
+        width: 250,
+        context: context,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     _desktopView = MediaQuery.of(context).size.width > 500;
+    _hasSpaceForRightPanel = MediaQuery.of(context).size.width > 700;
     final settingsButton = IconButton(
       onPressed: () {
         Navigator.of(context).push(
@@ -110,12 +167,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                     selectedIndex: _tabIndex,
                     groupAlignment: 0,
                     backgroundColor: Colors.transparent,
-                    onDestinationSelected: (int index) {
-                      setState(() {
-                        _tabIndex = index;
-                      });
-                      _toggleSearchMode(false);
-                    },
+                    onDestinationSelected: _onDestinationChange,
                     labelType: NavigationRailLabelType.all,
                     destinations: tabs
                         .map(
@@ -167,6 +219,29 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                         ),
                       )
                     : Container(),
+                ..._tabIndex != 3
+                    ? [
+                        _stickyFilterPanelOpen
+                            ? IconButton.filledTonal(
+                                isSelected: _selectedTags.containsValue(false),
+                                onPressed: _showFilterSheet,
+                                selectedIcon: Icon(
+                                  Icons.filter_alt_rounded,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                icon: const Icon(Icons.filter_alt_outlined),
+                              )
+                            : IconButton(
+                                isSelected: _selectedTags.containsValue(false),
+                                onPressed: _showFilterSheet,
+                                selectedIcon: Icon(
+                                  Icons.filter_alt_rounded,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                icon: const Icon(Icons.filter_alt_outlined),
+                              )
+                      ]
+                    : [],
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: settingsButton,
@@ -174,24 +249,26 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
               ],
             ),
             body: [
-              const Timer(),
-              const Timelogs(),
+              Timer(
+                selectedTags: _selectedTags,
+              ),
+              Timelogs(
+                selectedTags: _selectedTags,
+              ),
               Tasks(
                 searchString: _searchString,
+                selectedTags: _selectedTags,
               ),
               Tags(
                 searchString: _searchString,
               ),
-              const Stats(),
+              Stats(
+                selectedTags: _selectedTags,
+              ),
             ][_tabIndex],
             bottomNavigationBar: !_desktopView
                 ? NavigationBar(
-                    onDestinationSelected: (int index) {
-                      setState(() {
-                        _tabIndex = index;
-                      });
-                      _toggleSearchMode(false);
-                    },
+                    onDestinationSelected: _onDestinationChange,
                     selectedIndex: _tabIndex,
                     destinations: tabs
                         .map(
@@ -221,7 +298,127 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             ),
           ),
         ),
+        ..._stickyFilterPanelOpen && _hasSpaceForRightPanel
+            ? [
+                const VerticalDivider(
+                  width: 1,
+                ),
+                SizedBox(
+                  width: 250,
+                  child: TagFilter(
+                    tags: _tags,
+                    initialSelectedTags: _selectedTags,
+                    onTagSelectionChange: (selectedTags) {
+                      setState(() {
+                        _selectedTags = selectedTags;
+                      });
+                    },
+                    onClose: () {
+                      setState(() {
+                        _stickyFilterPanelOpen = false;
+                      });
+                    },
+                  ),
+                )
+              ]
+            : [],
       ],
+    );
+  }
+}
+
+class TagFilter extends StatefulWidget {
+  final List<Tag> tags;
+  final Map<Id, bool> initialSelectedTags;
+  final Function(Map<Id, bool>) onTagSelectionChange;
+  final Function() onClose;
+  const TagFilter({
+    super.key,
+    required this.tags,
+    required this.initialSelectedTags,
+    required this.onTagSelectionChange,
+    required this.onClose,
+  });
+
+  @override
+  State<TagFilter> createState() => _TagFilterState();
+}
+
+class _TagFilterState extends State<TagFilter> {
+  Map<Id, bool> _selectedTags = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTags = widget.initialSelectedTags;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    widget.onClose();
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded),
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                const Text(
+                  'Filter Tags',
+                  style: TextStyle(fontSize: 20),
+                )
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: widget.tags.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return ListTile(
+                    leading: Checkbox(
+                      value: !_selectedTags.containsValue(false),
+                      onChanged: (event) {
+                        if (event != null) {
+                          setState(() {
+                            for (var tag in widget.tags) {
+                              _selectedTags[tag.id] = event;
+                              widget.onTagSelectionChange(_selectedTags);
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    title: const Text('Select all'),
+                  );
+                }
+                return ListTile(
+                  leading: Checkbox(
+                    value: _selectedTags[widget.tags[index - 1].id] ?? false,
+                    onChanged: (event) {
+                      if (event != null) {
+                        setState(() {
+                          _selectedTags[widget.tags[index - 1].id] = event;
+                          widget.onTagSelectionChange(_selectedTags);
+                        });
+                      }
+                    },
+                  ),
+                  title: Text(widget.tags[index - 1].name),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

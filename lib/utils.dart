@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:isar/isar.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
@@ -115,9 +117,7 @@ int hoursToMilliseconds(double hours) {
 (
   List<List<MomentHours>>,
   List<List<MomentHours>>,
-) getStatsHours(
-  List<Timelog> timelogs,
-) {
+) getStatsHours(List<Timelog> timelogs, Map<Id, bool> selectedTags) {
   List<List<MomentHours>> daysInWeeks = [];
   List<List<MomentHours>> monthsInQuaters = [];
   Map<String, MomentHours> groupByDay = {};
@@ -127,7 +127,21 @@ int hoursToMilliseconds(double hours) {
   var oldestTimelogTimestamp = DateTime.now().millisecondsSinceEpoch;
   var latestTimelogTimestamp = DateTime.now().millisecondsSinceEpoch;
 
+  if (timelogs.isNotEmpty) {
+    oldestTimelogTimestamp = timelogs.first.startTime;
+    latestTimelogTimestamp = timelogs.first.endTime;
+  }
+
   for (var timelog in timelogs) {
+    // Filter out tags
+    if (timelog.task.value != null) {
+      if (timelog.task.value!.tags
+          .where((element) => selectedTags[element.id] ?? false)
+          .isEmpty) {
+        continue;
+      }
+    }
+
     final dateTimeString =
         DateTime.fromMillisecondsSinceEpoch(timelog.endTime).toDateString();
     final dayKey = dateTimeString;
@@ -204,10 +218,7 @@ int hoursToMilliseconds(double hours) {
     }
   }
 
-  // Months in Quater
-  List<MomentHours> quater = [];
-
-  // Go over each day form latest and oldest month and store MomentHours in monthsInQuaters
+  // TODO: Go over each day form latest and oldest month and store MomentHours in monthsInQuaters
 
   return (daysInWeeks.reversed.toList(), monthsInQuaters);
 }
@@ -218,4 +229,35 @@ int roundToNearestMultipleOf5(int number) {
 
   // If the remainder is less than 3, round down; otherwise, round up.
   return number + (5 - remainder);
+}
+
+// The developer is a weeb
+String getRandom404Emoji() {
+  const List<String> options = [
+    '(>_<)',
+    '⊙˛̼⊙',
+    '(⁰ ◕〜◕ ⁰)',
+    '⊙﹏⊙',
+    '●﹏●',
+    '⚆ᗝ⚆',
+    '(꒪⌓꒪)',
+    '⊙△⊙',
+    '˚ ▱ ˚',
+    '(ಠ~ಠ)',
+    '(つ﹏ <。)',
+    'UwU',
+    'OwO',
+    '>w<',
+    'Sorry (◞‸◟ㆀ)',
+    '◕︵◕',
+    '˚‧º·(˃̣̣̥⌓˂̣̣̥)‧º·˚',
+    '(.•̵̑⌓•̵̑ )',
+    '(*>ω<*)',
+    '( ✿˃̣̣̥᷄⌓˂̣̣̥᷅ )'
+  ];
+
+  // generates a new Random object
+  final random = Random();
+
+  return options[random.nextInt(options.length)];
 }

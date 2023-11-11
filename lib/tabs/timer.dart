@@ -7,7 +7,9 @@ import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 
 class Timer extends StatefulWidget {
-  const Timer({super.key});
+  final Map<Id, bool> selectedTags;
+
+  const Timer({super.key, required this.selectedTags});
 
   @override
   State<Timer> createState() => _TimerState();
@@ -187,10 +189,36 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                               List<DropdownMenuEntry> dropdownMenuEntries = [];
 
                               for (var task in tasks.data!) {
+                                if (task.tags
+                                    .where((element) =>
+                                        widget.selectedTags[element.id] ??
+                                        false)
+                                    .isNotEmpty) {
+                                  dropdownMenuEntries.add(
+                                    DropdownMenuEntry(
+                                      value: task.id,
+                                      label: task.name,
+                                      style: ButtonStyle(
+                                        padding:
+                                            MaterialStateProperty.resolveWith(
+                                          (states) =>
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 40,
+                                            vertical: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+
+                              if (dropdownMenuEntries.isEmpty) {
                                 dropdownMenuEntries.add(
                                   DropdownMenuEntry(
-                                    value: task.id,
-                                    label: task.name,
+                                    enabled: false,
+                                    value: -1,
+                                    label: 'No task available',
                                     style: ButtonStyle(
                                       padding:
                                           MaterialStateProperty.resolveWith(
@@ -209,7 +237,7 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                                 width: constraints.maxWidth,
                                 menuHeight: 300,
                                 enabled: !running,
-                                enableFilter: false,
+                                enableFilter: true,
                                 leadingIcon:
                                     const Icon(Icons.checklist_rounded),
                                 label: const Text('Task'),

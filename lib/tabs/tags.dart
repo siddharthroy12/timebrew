@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
@@ -6,6 +8,7 @@ import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/popups/create_tag.dart';
 import 'package:timebrew/utils.dart';
+import 'package:timebrew/widgets/no_data_emoji.dart';
 
 class Tags extends StatefulWidget {
   final String searchString;
@@ -24,11 +27,12 @@ class _TagsState extends State<Tags> {
   final Map<Id, int> _millisecondsOnTags = {};
   List<Tag> _tags = [];
   bool _isLoading = true;
+  late StreamSubscription _tagStreamSubscription;
 
   @override
   void initState() {
     super.initState();
-    _isar.getTagStream().listen((tags) {
+    _tagStreamSubscription = _isar.getTagStream().listen((tags) {
       setState(() {
         _tags = tags;
         _isLoading = false;
@@ -55,6 +59,12 @@ class _TagsState extends State<Tags> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _tagStreamSubscription.cancel();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(
@@ -68,11 +78,16 @@ class _TagsState extends State<Tags> {
               ),
         )
         .toList();
+
+    if (filteredList.isEmpty) {
+      return const NoDataEmoji();
+    }
     return ListView.separated(
       itemCount: filteredList.length,
       separatorBuilder: (context, index) {
         return Container();
       },
+      padding: const EdgeInsets.only(bottom: 60),
       itemBuilder: (BuildContext context, int index) {
         Tag tag = filteredList[index];
         return TagEntry(

@@ -3,88 +3,93 @@ import 'package:isar/isar.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:timebrew/widgets/no_data_emoji.dart';
 
 enum GroupBy { daysInMonth, weeksInMonth }
 
 class Stats extends StatefulWidget {
-  const Stats({super.key});
+  final Map<Id, bool> selectedTags;
+
+  const Stats({super.key, required this.selectedTags});
 
   @override
   State<Stats> createState() => _StatsState();
 }
 
 class _StatsState extends State<Stats> {
-  final isar = IsarService();
-  List<List<MomentHours>> daysInWeeks = [];
-  List<List<MomentHours>> monthsInQuaters = [];
-  int outerIndex = 0;
-  int innerIndex = 0;
-  GroupBy groupBy = GroupBy.weeksInMonth;
-  final PageController _controller = PageController();
+  final _isar = IsarService();
+  List<List<MomentHours>> _daysInWeeks = [];
+  int _outerIndex = 0;
+  int _innerIndex = 0;
+  PageController _controller = PageController();
 
   @override
   void initState() {
     super.initState();
-    isar.getTimelogStream().listen((timelogs) {
-      final (daysInWeeks, monthsInQuaters) = getStatsHours(timelogs);
-      setState(() {
-        this.daysInWeeks = daysInWeeks;
-        if (daysInWeeks.isNotEmpty) {
-          int finalInnerIndex = 0;
 
-          outerIndex = daysInWeeks.length - 1;
-          _controller.jumpToPage(
-            outerIndex,
-          );
+    _isar.getTimelogStream().first.then(_loadDaysInWeeks);
+  }
 
-          for (var i = 0; i < daysInWeeks[outerIndex].length; i++) {
-            if (daysInWeeks[outerIndex][i].totalHours != 0) {
-              finalInnerIndex = i;
-            }
+  void _loadDaysInWeeks(timelogs) {
+    var (daysInWeeks, _) = getStatsHours(timelogs, widget.selectedTags);
+    setState(() {
+      _daysInWeeks = daysInWeeks;
+      if (daysInWeeks.isNotEmpty) {
+        int finalInnerIndex = 0;
+
+        _outerIndex = daysInWeeks.length - 1;
+        _controller = PageController(initialPage: _outerIndex);
+
+        for (var i = 0; i < daysInWeeks[_outerIndex].length; i++) {
+          if (daysInWeeks[_outerIndex][i].totalHours != 0) {
+            finalInnerIndex = i;
           }
-          innerIndex = finalInnerIndex;
         }
-
-        this.monthsInQuaters = monthsInQuaters;
-      });
+        _innerIndex = finalInnerIndex;
+      }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant Stats oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _isar.getTimelogStream().first.then(_loadDaysInWeeks);
   }
 
   void _selectNextMoment() {
     setState(() {
-      if (innerIndex == daysInWeeks[outerIndex].length - 1) {
-        if (outerIndex < daysInWeeks.length - 1) {
-          outerIndex += 1;
+      if (_innerIndex == _daysInWeeks[_outerIndex].length - 1) {
+        if (_outerIndex < _daysInWeeks.length - 1) {
+          _outerIndex += 1;
         }
       } else {
-        if (innerIndex < daysInWeeks[outerIndex].length - 1) {
-          int oldIndex = innerIndex;
-          innerIndex += 1;
+        if (_innerIndex < _daysInWeeks[_outerIndex].length - 1) {
+          int oldIndex = _innerIndex;
+          _innerIndex += 1;
 
-          while (innerIndex < daysInWeeks[outerIndex].length - 1 &&
-              daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
-            innerIndex += 1;
+          while (_innerIndex < _daysInWeeks[_outerIndex].length - 1 &&
+              _daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+            _innerIndex += 1;
           }
-          if (daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
-            if (outerIndex < daysInWeeks.length - 1) {
-              outerIndex += 1;
-              int finalInnerIndex = daysInWeeks[outerIndex].length - 1;
+          if (_daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+            if (_outerIndex < _daysInWeeks.length - 1) {
+              _outerIndex += 1;
+              int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
               for (var i = finalInnerIndex; i > 0; i--) {
-                if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
                   finalInnerIndex = i;
                 }
               }
-              innerIndex = finalInnerIndex;
+              _innerIndex = finalInnerIndex;
             } else {
-              innerIndex = oldIndex;
+              _innerIndex = oldIndex;
             }
           }
         }
       }
       _controller.animateToPage(
-        outerIndex,
+        _outerIndex,
         duration: const Duration(milliseconds: 250),
         curve: Curves.linear,
       );
@@ -93,40 +98,40 @@ class _StatsState extends State<Stats> {
 
   void _selectPreviousMoment() {
     setState(() {
-      if (innerIndex == 0) {
-        if (outerIndex > 0) {
-          outerIndex -= 1;
+      if (_innerIndex == 0) {
+        if (_outerIndex > 0) {
+          _outerIndex -= 1;
         }
       } else {
-        if (innerIndex > 0) {
-          int oldIndex = innerIndex;
+        if (_innerIndex > 0) {
+          int oldIndex = _innerIndex;
 
-          innerIndex -= 1;
+          _innerIndex -= 1;
 
-          while (innerIndex > 0 &&
-              daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
-            innerIndex -= 1;
+          while (_innerIndex > 0 &&
+              _daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+            _innerIndex -= 1;
           }
-          if (daysInWeeks[outerIndex][innerIndex].totalHours == 0.0) {
-            if (outerIndex > 0) {
-              outerIndex -= 1;
+          if (_daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+            if (_outerIndex > 0) {
+              _outerIndex -= 1;
               int finalInnerIndex = 0;
               for (var i = finalInnerIndex;
-                  i < daysInWeeks[outerIndex].length;
+                  i < _daysInWeeks[_outerIndex].length;
                   i++) {
-                if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
                   finalInnerIndex = i;
                 }
               }
-              innerIndex = finalInnerIndex;
+              _innerIndex = finalInnerIndex;
             } else {
-              innerIndex = oldIndex;
+              _innerIndex = oldIndex;
             }
           }
         }
       }
       _controller.animateToPage(
-        outerIndex,
+        _outerIndex,
         duration: const Duration(milliseconds: 250),
         curve: Curves.linear,
       );
@@ -138,14 +143,19 @@ class _StatsState extends State<Stats> {
     String moment = '';
     String timeSpent = '';
     Widget? chart;
-    if (daysInWeeks.isNotEmpty && daysInWeeks[outerIndex].isNotEmpty) {
-      moment = daysInWeeks[outerIndex][innerIndex].moment;
-      timeSpent = millisecondsToReadable(
-          hoursToMilliseconds(daysInWeeks[outerIndex][innerIndex].totalHours));
-      chart = MomentPieChart(
-        momentHours: daysInWeeks[outerIndex][innerIndex],
+    if (_daysInWeeks.isNotEmpty && _daysInWeeks[_outerIndex].isNotEmpty) {
+      moment = _daysInWeeks[_outerIndex][_innerIndex].moment;
+      timeSpent = millisecondsToReadable(hoursToMilliseconds(
+          _daysInWeeks[_outerIndex][_innerIndex].totalHours));
+      chart = MomentRingChart(
+        momentHours: _daysInWeeks[_outerIndex][_innerIndex],
       );
     }
+
+    if (_daysInWeeks.isEmpty) {
+      return const NoDataEmoji();
+    }
+
     return ListView(
       children: [
         SizedBox(
@@ -194,33 +204,33 @@ class _StatsState extends State<Stats> {
         SizedBox(
           height: 150, // Card height
           child: PageView.builder(
-            itemCount: daysInWeeks.length,
+            itemCount: _daysInWeeks.length,
             controller: _controller,
             onPageChanged: (value) {
-              if (outerIndex < value) {
+              if (_outerIndex < value) {
                 setState(() {
-                  outerIndex = value;
+                  _outerIndex = value;
 
-                  int finalInnerIndex = daysInWeeks[outerIndex].length - 1;
+                  int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
                   for (var i = finalInnerIndex; i > 0; i--) {
-                    if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
                       finalInnerIndex = i;
                     }
                   }
-                  innerIndex = finalInnerIndex;
+                  _innerIndex = finalInnerIndex;
                 });
-              } else if (outerIndex > value) {
+              } else if (_outerIndex > value) {
                 setState(() {
-                  outerIndex = value;
+                  _outerIndex = value;
                   int finalInnerIndex = 0;
                   for (var i = finalInnerIndex;
-                      i < daysInWeeks[outerIndex].length;
+                      i < _daysInWeeks[_outerIndex].length;
                       i++) {
-                    if (daysInWeeks[outerIndex][i].totalHours != 0) {
+                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
                       finalInnerIndex = i;
                     }
                   }
-                  innerIndex = finalInnerIndex;
+                  _innerIndex = finalInnerIndex;
                 });
               }
             },
@@ -228,16 +238,16 @@ class _StatsState extends State<Stats> {
               return ListenableBuilder(
                 listenable: _controller,
                 builder: (context, child) {
-                  List<MomentHours> moments = daysInWeeks[index];
+                  List<MomentHours> moments = _daysInWeeks[index];
 
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: BarChart(
                       moments: moments,
-                      selectedMoment: outerIndex == index ? innerIndex : -1,
+                      selectedMoment: _outerIndex == index ? _innerIndex : -1,
                       onSelectedMomentChange: (moment) {
                         setState(() {
-                          innerIndex = moment;
+                          _innerIndex = moment;
                         });
                       },
                     ),
@@ -252,9 +262,11 @@ class _StatsState extends State<Stats> {
         ),
         Builder(
           builder: (context) {
-            if (daysInWeeks.isNotEmpty && daysInWeeks[outerIndex].isNotEmpty) {
+            if (_daysInWeeks.isNotEmpty &&
+                _daysInWeeks[_outerIndex].isNotEmpty) {
               return MomentTasks(
-                  momentHours: daysInWeeks[outerIndex][innerIndex]);
+                momentHours: _daysInWeeks[_outerIndex][_innerIndex],
+              );
             } else {
               return Container();
             }
@@ -265,16 +277,16 @@ class _StatsState extends State<Stats> {
   }
 }
 
-class MomentPieChart extends StatefulWidget {
+class MomentRingChart extends StatefulWidget {
   final MomentHours momentHours;
 
-  const MomentPieChart({super.key, required this.momentHours});
+  const MomentRingChart({super.key, required this.momentHours});
 
   @override
-  State<MomentPieChart> createState() => _MomentPieChartState();
+  State<MomentRingChart> createState() => _MomentRingChartState();
 }
 
-class _MomentPieChartState extends State<MomentPieChart> {
+class _MomentRingChartState extends State<MomentRingChart> {
   final isar = IsarService();
   Map<Id, String> names = {};
 
@@ -285,7 +297,7 @@ class _MomentPieChartState extends State<MomentPieChart> {
   }
 
   @override
-  void didUpdateWidget(covariant MomentPieChart oldWidget) {
+  void didUpdateWidget(covariant MomentRingChart oldWidget) {
     super.didUpdateWidget(oldWidget);
     _calculateNames();
   }
@@ -406,7 +418,6 @@ class _BarChartState extends State<BarChart> {
   @override
   void initState() {
     super.initState();
-    setState(() {});
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
@@ -7,11 +8,17 @@ import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/utils.dart';
+import 'package:timebrew/widgets/no_data_emoji.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class Tasks extends StatefulWidget {
   final String searchString;
-  const Tasks({super.key, required this.searchString});
+  final Map<Id, bool> selectedTags;
+  const Tasks({
+    super.key,
+    required this.searchString,
+    required this.selectedTags,
+  });
 
   @override
   State<Tasks> createState() => _TasksState();
@@ -22,11 +29,12 @@ class _TasksState extends State<Tasks> {
   final Map<Id, int> _millisecondsOnTasks = {};
   List<Task> _tasks = [];
   bool _isLoading = true;
+  late StreamSubscription _tasksStreamSubscription;
 
   @override
   void initState() {
     super.initState();
-    _isar.getTaskStream().listen((tasks) {
+    _tasksStreamSubscription = _isar.getTaskStream().listen((tasks) {
       setState(() {
         _tasks = tasks;
         _isLoading = false;
@@ -52,13 +60,21 @@ class _TasksState extends State<Tasks> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _tasksStreamSubscription.cancel();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
-    final filteredList = _tasks
+
+    // Search Filter
+    var filteredList = _tasks
         .where(
           (element) =>
               element.name.toLowerCase().contains(
@@ -73,11 +89,24 @@ class _TasksState extends State<Tasks> {
                   .isNotEmpty,
         )
         .toList();
+
+    // Filter tag
+    filteredList = filteredList
+        .where((element) => element.tags
+            .where((element) => widget.selectedTags[element.id] ?? true)
+            .isNotEmpty)
+        .toList();
+
+    if (filteredList.isEmpty) {
+      return const NoDataEmoji();
+    }
+
     return ListView.separated(
       itemCount: filteredList.length,
       separatorBuilder: (context, index) {
         return Container();
       },
+      padding: const EdgeInsets.only(bottom: 60),
       itemBuilder: (BuildContext context, int index) {
         Task task = filteredList[index];
         return TaskEntry(
@@ -136,13 +165,8 @@ class TaskEntry extends StatelessWidget {
                           color: HexColor.fromHex(tag.color),
                         ),
                         label: Text(
-                          '#${tag.name}',
-                          style: TextStyle(
-                            color: HexColor.fromHex(tag.color)
-                                        .computeLuminance() >=
-                                    0.5
-                                ? Colors.black
-                                : Colors.white,
+                          tag.name,
+                          style: const TextStyle(
                             fontSize: 12,
                           ),
                         ),

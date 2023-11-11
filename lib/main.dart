@@ -1,4 +1,3 @@
-import 'package:context_menus/context_menus.dart';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/gestures.dart';
@@ -113,72 +112,10 @@ class MyApp extends StatelessWidget {
             themeMode: ThemeMode.dark,
             theme: mixWithCommonTheme(lightColorScheme),
             darkTheme: mixWithCommonTheme(darkColorScheme),
-            home: ContextMenuOverlay(
-              buttonBuilder: (context, config, [style]) => MenuItemButton(
-                onPressed: config.onPressed,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 100,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      config.label,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              cardBuilder: (_, children) => Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Column(
-                    children: children,
-                  ),
-                ),
-              ),
-              child: const Tabs(),
-            ),
+            home: const Tabs(),
           ),
         );
       },
     );
-  }
-}
-
-@immutable
-class CustomColors extends ThemeExtension<CustomColors> {
-  const CustomColors({
-    required this.danger,
-  });
-
-  final Color? danger;
-
-  @override
-  CustomColors copyWith({Color? danger}) {
-    return CustomColors(
-      danger: danger ?? this.danger,
-    );
-  }
-
-  @override
-  CustomColors lerp(ThemeExtension<CustomColors>? other, double t) {
-    if (other is! CustomColors) {
-      return this;
-    }
-    return CustomColors(
-      danger: Color.lerp(danger, other.danger, t),
-    );
-  }
-
-  CustomColors harmonized(ColorScheme dynamic) {
-    return copyWith(danger: danger!.harmonizeWith(dynamic.primary));
   }
 }

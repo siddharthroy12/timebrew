@@ -5,11 +5,14 @@ import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/widgets/no_data_emoji.dart';
 import '../widgets/grouped_list.dart';
 import 'package:timebrew/utils.dart';
 
 class Timelogs extends StatefulWidget {
-  const Timelogs({super.key});
+  final Map<Id, bool> selectedTags;
+
+  const Timelogs({super.key, required this.selectedTags});
 
   @override
   State<Timelogs> createState() => _TimelogsState();
@@ -34,9 +37,27 @@ class _TimelogsState extends State<Timelogs>
           initialData: const [],
           stream: isar.getTimelogStream(),
           builder: (context, snapshot) {
+            var filteredList = snapshot.data ?? [];
+
+            filteredList = filteredList.where(
+              (element) {
+                if (element.task.value != null) {
+                  return element.task.value!.tags
+                      .where(
+                          (element) => widget.selectedTags[element.id] ?? true)
+                      .isNotEmpty;
+                } else {
+                  return widget.selectedTags.containsValue(false);
+                }
+              },
+            ).toList();
+
+            if (filteredList.isEmpty) {
+              return const NoDataEmoji();
+            }
             return GroupedListView<Timelog, String>(
-              padding: const EdgeInsets.all(8),
-              elements: snapshot.data ?? [],
+              padding: const EdgeInsets.only(bottom: 60),
+              elements: filteredList,
               groupBy: (element) =>
                   DateTime.fromMillisecondsSinceEpoch(element.startTime)
                       .toDateString(),

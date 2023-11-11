@@ -49,6 +49,7 @@ dependencies:
   animated_flip_counter: ^0.2.6
   context_menus: ^1.0.2
   syncfusion_flutter_charts: ^23.1.44
+  side_sheet: ^1.0.4
 
 dev_dependencies:
   flutter_test:
