@@ -20,6 +20,7 @@ class Stats extends StatefulWidget {
 class _StatsState extends State<Stats> {
   final _isar = IsarService();
   List<List<MomentHours>> _daysInWeeks = [];
+  bool _isLoading = true;
   int _outerIndex = 0;
   int _innerIndex = 0;
   PageController _controller = PageController();
@@ -34,6 +35,7 @@ class _StatsState extends State<Stats> {
   void _loadDaysInWeeks(timelogs) {
     var (daysInWeeks, _) = getStatsHours(timelogs, widget.selectedTags);
     setState(() {
+      _isLoading = false;
       _daysInWeeks = daysInWeeks;
       if (daysInWeeks.isNotEmpty) {
         int finalInnerIndex = 0;
@@ -140,6 +142,11 @@ class _StatsState extends State<Stats> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     String moment = '';
     String timeSpent = '';
     Widget? chart;

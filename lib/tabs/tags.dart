@@ -25,7 +25,7 @@ class Tags extends StatefulWidget {
 class _TagsState extends State<Tags> {
   final _isar = IsarService();
   final Map<Id, int> _millisecondsOnTags = {};
-  List<Tag> _tags = [];
+  List<Tag>? _tags = [];
   bool _isLoading = true;
   late StreamSubscription _tagStreamSubscription;
 
@@ -66,12 +66,17 @@ class _TagsState extends State<Tags> {
 
   @override
   Widget build(BuildContext context) {
+    if (_tags == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
-    final filteredList = _tags
+    final filteredList = _tags!
         .where(
           (element) => element.name.toLowerCase().contains(
                 widget.searchString.toLowerCase(),

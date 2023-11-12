@@ -39,9 +39,13 @@ class _TimelogsState extends State<Timelogs>
       stream: isar.getTaskStream(),
       builder: (context, snapshot) {
         return StreamBuilder<List<Timelog>>(
-          initialData: const [],
           stream: isar.getTimelogStream(),
           builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
             var filteredList = snapshot.data ?? [];
 
             // Filter task

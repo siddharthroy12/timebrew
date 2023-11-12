@@ -28,7 +28,7 @@ class Tasks extends StatefulWidget {
 class _TasksState extends State<Tasks> {
   final _isar = IsarService();
   final Map<Id, int> _millisecondsOnTasks = {};
-  List<Task> _tasks = [];
+  List<Task>? _tasks = [];
   bool _isLoading = true;
   late StreamSubscription _tasksStreamSubscription;
 
@@ -68,6 +68,11 @@ class _TasksState extends State<Tasks> {
 
   @override
   Widget build(BuildContext context) {
+    if (_tasks == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -75,7 +80,7 @@ class _TasksState extends State<Tasks> {
     }
 
     // Search Filter
-    var filteredList = _tasks
+    var filteredList = _tasks!
         .where(
           (element) =>
               element.name.toLowerCase().contains(
