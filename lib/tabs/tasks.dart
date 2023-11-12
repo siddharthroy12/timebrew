@@ -100,7 +100,7 @@ class _TasksState extends State<Tasks> {
     // Filter tag
     filteredList = filteredList
         .where((element) => element.tags
-            .where((element) => widget.selectedTags[element.id] ?? true)
+            .where((element) => widget.selectedTags[element.id] ?? false)
             .isNotEmpty)
         .toList();
 

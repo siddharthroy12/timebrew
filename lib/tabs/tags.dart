@@ -7,6 +7,7 @@ import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/popups/create_tag.dart';
+import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
 import 'package:timebrew/widgets/no_data_emoji.dart';
 
@@ -123,7 +124,19 @@ class TagEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      onTap: () {},
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(title: Text('$name Tasks')),
+              body: Tasks(
+                searchString: "",
+                selectedTags: {id: true},
+              ),
+            ),
+          ),
+        );
+      },
       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       leading: Container(
         decoration: BoxDecoration(
