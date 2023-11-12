@@ -265,7 +265,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                 searchString: _searchString,
               ),
               Stats(
-                selectedTags: _selectedTags,
+                selectedTags: Map.of(_selectedTags),
               ),
             ][_tabIndex],
             bottomNavigationBar: !_desktopView
