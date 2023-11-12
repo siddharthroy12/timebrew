@@ -4,6 +4,7 @@ import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/models/task.dart';
+import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/services/isar_service.dart';
@@ -133,6 +134,8 @@ class TaskEntry extends StatelessWidget {
   final int milliseconds;
   final List<Tag> tags;
   final String link;
+  final List<Timelog> timelogs;
+  final bool showExpansion;
 
   const TaskEntry({
     super.key,
@@ -141,10 +144,84 @@ class TaskEntry extends StatelessWidget {
     required this.milliseconds,
     required this.tags,
     required this.link,
+    this.timelogs = const [],
+    this.showExpansion = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget title = Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          name,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(
+          width: 10,
+        ),
+        Text(
+          millisecondsToReadable(milliseconds),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+
+    Widget? subtitle = tags.isNotEmpty
+        ? Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: tags
+                  .map(
+                    (tag) => ActionChip(
+                      onPressed: () {},
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(50),
+                        ),
+                      ),
+                      color: MaterialStateProperty.resolveWith((states) {
+                        return HexColor.fromHex(tag.color).withOpacity(0.2);
+                      }),
+                      side: BorderSide(
+                        width: 1,
+                        color: HexColor.fromHex(tag.color),
+                      ),
+                      label: Text(
+                        tag.name,
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          )
+        : null;
+
+    EdgeInsets padding =
+        const EdgeInsets.symmetric(vertical: 10, horizontal: 20);
+
+    if (showExpansion) {
+      return ExpansionTile(
+        title: title,
+        subtitle: subtitle,
+        tilePadding: padding,
+        children: timelogs
+            .map(
+              (element) => TimelogEntry(
+                id: element.id,
+                task: (element.task.value?.name ?? ''),
+                description: element.description,
+                milliseconds: element.endTime - element.startTime,
+                startTime: element.startTime,
+                endTime: element.endTime,
+                running: element.running,
+              ),
+            )
+            .toList(),
+      );
+    }
     return ListTile(
       onTap: () {
         Navigator.of(context).push(
@@ -158,38 +235,8 @@ class TaskEntry extends StatelessWidget {
           ),
         );
       },
-      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      subtitle: tags.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: tags
-                    .map(
-                      (tag) => ActionChip(
-                        onPressed: () {},
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(50),
-                          ),
-                        ),
-                        color: MaterialStateProperty.resolveWith((states) {
-                          return HexColor.fromHex(tag.color).withOpacity(0.2);
-                        }),
-                        side: BorderSide(
-                          width: 1,
-                          color: HexColor.fromHex(tag.color),
-                        ),
-                        label: Text(
-                          tag.name,
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            )
-          : null,
+      contentPadding: padding,
+      subtitle: subtitle,
       trailing: PopupMenuButton(
         itemBuilder: (BuildContext context) => <PopupMenuEntry>[
           PopupMenuItem(
@@ -240,22 +287,7 @@ class TaskEntry extends StatelessWidget {
           ),
         ],
       ),
-      title: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            name,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(
-            width: 10,
-          ),
-          Text(
-            millisecondsToReadable(milliseconds),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
-      ),
+      title: title,
     );
   }
 }

@@ -16,10 +16,12 @@ class MomentHours {
   String moment;
   double totalHours;
   Map<Id, double> taskHours;
+  Map<Id, List<Timelog>> taskTimelogs;
   MomentHours({
     required this.moment,
     required this.totalHours,
     required this.taskHours,
+    required this.taskTimelogs,
   });
 }
 
@@ -160,8 +162,12 @@ int hoursToMilliseconds(double hours) {
 
     // Group by day
     if (!groupByDay.containsKey(dayKey)) {
-      groupByDay[dayKey] =
-          MomentHours(moment: dayKey, totalHours: 0, taskHours: {});
+      groupByDay[dayKey] = MomentHours(
+        moment: dayKey,
+        totalHours: 0,
+        taskHours: {},
+        taskTimelogs: {},
+      );
     }
     groupByDay[dayKey]!.totalHours += hours;
     if (timelog.task.value != null) {
@@ -170,12 +176,23 @@ int hoursToMilliseconds(double hours) {
       }
       groupByDay[dayKey]!.taskHours[timelog.task.value!.id] =
           groupByDay[dayKey]!.taskHours[timelog.task.value!.id]! + hours;
+
+      if (!groupByDay[dayKey]!
+          .taskTimelogs
+          .containsKey(timelog.task.value!.id)) {
+        groupByDay[dayKey]!.taskTimelogs[timelog.task.value!.id] = [];
+      }
+      groupByDay[dayKey]!.taskTimelogs[timelog.task.value!.id]!.add(timelog);
     }
 
     // Group by month
     if (!groupByMonth.containsKey(monthKey)) {
-      groupByMonth[monthKey] =
-          MomentHours(moment: monthKey, totalHours: 0, taskHours: {});
+      groupByMonth[monthKey] = MomentHours(
+        moment: monthKey,
+        totalHours: 0,
+        taskHours: {},
+        taskTimelogs: {},
+      );
     }
     groupByMonth[monthKey]!.totalHours += hours;
     if (timelog.task.value != null) {
@@ -186,6 +203,15 @@ int hoursToMilliseconds(double hours) {
       }
       groupByMonth[monthKey]!.taskHours[timelog.task.value!.id] =
           groupByMonth[monthKey]!.taskHours[timelog.task.value!.id]! + hours;
+
+      if (!groupByMonth[monthKey]!
+          .taskTimelogs
+          .containsKey(timelog.task.value!.id)) {
+        groupByMonth[monthKey]!.taskTimelogs[timelog.task.value!.id] = [];
+      }
+      groupByMonth[monthKey]!
+          .taskTimelogs[timelog.task.value!.id]!
+          .add(timelog);
     }
   }
 
@@ -213,8 +239,12 @@ int hoursToMilliseconds(double hours) {
     if (groupByDay.containsKey(dateTimeString)) {
       week.add(groupByDay[dateTimeString]!);
     } else {
-      week.add(
-          MomentHours(moment: dateTimeString, totalHours: 0, taskHours: {}));
+      week.add(MomentHours(
+        moment: dateTimeString,
+        totalHours: 0,
+        taskHours: {},
+        taskTimelogs: {},
+      ));
     }
   }
 

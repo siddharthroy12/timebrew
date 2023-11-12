@@ -56,7 +56,9 @@ class _StatsState extends State<Stats> {
   @override
   void didUpdateWidget(covariant Stats oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _isar.getTimelogStream().first.then(_loadDaysInWeeks);
+    if (oldWidget.selectedTags != widget.selectedTags) {
+      _isar.getTimelogStream().first.then(_loadDaysInWeeks);
+    }
   }
 
   void _selectNextMoment() {
@@ -385,16 +387,14 @@ class _MomentTasksState extends State<MomentTasks> {
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   final task = snapshot.data!;
-                  return Column(
-                    children: [
-                      TaskEntry(
-                        name: task.name,
-                        id: task.id,
-                        milliseconds: hoursToMilliseconds(e.$1),
-                        tags: task.tags.toList(),
-                        link: task.link,
-                      ),
-                    ],
+                  return TaskEntry(
+                    name: task.name,
+                    id: task.id,
+                    milliseconds: hoursToMilliseconds(e.$1),
+                    tags: task.tags.toList(),
+                    link: task.link,
+                    timelogs: widget.momentHours.taskTimelogs[e.$2]!,
+                    showExpansion: true,
                   );
                 }
                 return Container();
@@ -439,114 +439,118 @@ class _BarChartState extends State<BarChart> {
     if (maxHours < 5) {
       maxHours = 5;
     }
-    return Stack(children: [
-      Transform.translate(
-        offset: const Offset(0, -8),
-        child: Transform.scale(
-          scaleY: 1.05,
-          child: Column(
-            children: List.generate(
-              5,
-              (index) => Expanded(
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Divider(
-                        height: 0,
+    return Stack(
+      children: [
+        Transform.translate(
+          offset: const Offset(0, -8),
+          child: Transform.scale(
+            scaleY: 1.05,
+            child: Column(
+              children: List.generate(
+                5,
+                (index) => Expanded(
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Divider(
+                          height: 0,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      '${(maxHours * ((4 - index) / 4)).toStringAsFixed(1)}h',
-                      style: const TextStyle(fontSize: 9),
-                    )
-                  ],
+                      const SizedBox(width: 5),
+                      Text(
+                        '${(maxHours * ((4 - index) / 4)).toStringAsFixed(1)}h',
+                        style: const TextStyle(fontSize: 9),
+                      )
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-      Padding(
-        padding: const EdgeInsets.only(left: 10.0, right: 35),
-        child: Row(
-          children: widget.moments
-              .asMap()
-              .entries
-              .map(
-                (entry) => Expanded(
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Stack(
-                            alignment: AlignmentDirectional.bottomStart,
-                            clipBehavior: Clip.none,
-                            children: [
-                              const SizedBox(
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
-                              FractionallySizedBox(
-                                heightFactor:
-                                    (entry.value.totalHours / maxHours),
-                                widthFactor: 1,
-                                child: Container(
-                                  transform: Matrix4.translationValues(
-                                    0.0,
-                                    -22.0,
-                                    0.0,
-                                  ),
-                                  child: Text(
-                                    '${entry.value.totalHours.toStringAsFixed(1)}h',
-                                    style: const TextStyle(fontSize: 9),
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.visible,
-                                  ),
+        Padding(
+          padding: const EdgeInsets.only(left: 10.0, right: 35),
+          child: Row(
+            children: widget.moments
+                .asMap()
+                .entries
+                .map(
+                  (entry) => Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Stack(
+                              alignment: AlignmentDirectional.bottomStart,
+                              clipBehavior: Clip.none,
+                              children: [
+                                const SizedBox(
+                                  width: double.infinity,
+                                  height: double.infinity,
                                 ),
-                              ),
-                              FractionallySizedBox(
-                                heightFactor: entry.value.totalHours / maxHours,
-                                child: InkWell(
-                                  onTap: () {
-                                    widget.onSelectedMomentChange(entry.key);
-                                  },
+                                FractionallySizedBox(
+                                  heightFactor:
+                                      (entry.value.totalHours / maxHours),
+                                  widthFactor: 1,
                                   child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(4),
-                                        topRight: Radius.circular(4),
-                                      ),
-                                      color: widget.selectedMoment == entry.key
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .inversePrimary
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .secondary,
+                                    transform: Matrix4.translationValues(
+                                      0.0,
+                                      -22.0,
+                                      0.0,
+                                    ),
+                                    child: Text(
+                                      '${entry.value.totalHours.toStringAsFixed(1)}h',
+                                      style: const TextStyle(fontSize: 9),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.visible,
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                                FractionallySizedBox(
+                                  heightFactor:
+                                      entry.value.totalHours / maxHours,
+                                  child: InkWell(
+                                    onTap: () {
+                                      widget.onSelectedMomentChange(entry.key);
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(4),
+                                          topRight: Radius.circular(4),
+                                        ),
+                                        color:
+                                            widget.selectedMoment == entry.key
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .inversePrimary
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .secondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Text(
-                        entry.value.moment.split(',')[0],
-                        style: const TextStyle(fontSize: 9),
-                      ),
-                    ],
+                        const SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          entry.value.moment.split(',')[0],
+                          style: const TextStyle(fontSize: 9),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              )
-              .toList(),
+                )
+                .toList(),
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 }
