@@ -110,39 +110,42 @@ class _CreateTagDialogState extends State<CreateTagDialog> {
     return AlertDialog(
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(
-              height: 10,
-            ),
-            Text(
-              widget.id == null ? 'Create Tag' : 'Update Tag',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            TextField(
-              controller: textFieldController,
-              cursorHeight: 20,
-              style: const TextStyle(height: 1.2),
-              decoration: const InputDecoration(label: Text('Tag name')),
-              onChanged: (String value) {
-                setState(() {
-                  name = value;
-                });
-              },
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Wrap(
-              direction: Axis.horizontal,
-              children: _buidColorOptions(),
-            )
-          ],
+        child: ScrollConfiguration(
+          behavior: const ScrollBehavior(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(
+                height: 10,
+              ),
+              Text(
+                widget.id == null ? 'Create Tag' : 'Update Tag',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              TextField(
+                controller: textFieldController,
+                cursorHeight: 20,
+                style: const TextStyle(height: 1.2),
+                decoration: const InputDecoration(label: Text('Tag name')),
+                onChanged: (String value) {
+                  setState(() {
+                    name = value;
+                  });
+                },
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              Wrap(
+                direction: Axis.horizontal,
+                children: _buidColorOptions(),
+              )
+            ],
+          ),
         ),
       ),
       actions: [

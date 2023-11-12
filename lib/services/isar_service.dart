@@ -113,7 +113,7 @@ class IsarService {
   Future<void> addTask(String name, String link, List<Id> tagIds) async {
     final isar = await db;
     final Task task = Task()
-      ..name = name
+      ..name = name.trim()
       ..link = link;
 
     for (Id tagId in tagIds) {
@@ -139,7 +139,7 @@ class IsarService {
     var task = await isar.tasks.get(id);
 
     if (task != null) {
-      task.name = name;
+      task.name = name.trim();
       task.link = link;
       task.tags.removeWhere((element) => !tags.contains(element.id));
 
@@ -188,7 +188,7 @@ class IsarService {
   Future<void> addTag(String name, String color) async {
     final isar = await db;
     final Tag tag = Tag()
-      ..name = name
+      ..name = name.trim()
       ..color = color;
 
     await isar.writeTxn(() async {
@@ -200,8 +200,18 @@ class IsarService {
     final isar = await db;
 
     await isar.writeTxn(() async {
+      tag.name = tag.name.trim();
       await isar.tags.put(tag);
     });
+  }
+
+  Future<List<Task>> getTasksWithOnlyOneTag(Id tagId) async {
+    final isar = await db;
+    return isar.tasks
+        .filter()
+        .tagsLengthEqualTo(1)
+        .tags((q) => q.idEqualTo(tagId))
+        .findAll();
   }
 
   Future<void> deleteTag(
@@ -212,5 +222,12 @@ class IsarService {
     await isar.writeTxn(() async {
       await isar.tags.delete(id);
     });
+
+    // Delete tasks that only has this tag
+    var tasksToDelete = await getTasksWithOnlyOneTag(id);
+
+    for (var task in tasksToDelete) {
+      await deleteTask(task.id, true);
+    }
   }
 }

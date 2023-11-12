@@ -6,11 +6,13 @@ class ConfirmDeleteDialog extends StatefulWidget {
     this.onConfirm,
     this.onCancle,
     this.description,
+    this.extraDescription,
   });
 
   final String? description;
   final Function? onConfirm;
   final Function? onCancle;
+  final Widget? extraDescription;
 
   @override
   State<ConfirmDeleteDialog> createState() => _ConfirmDeleteDialogState();
@@ -37,6 +39,20 @@ class _ConfirmDeleteDialogState extends State<ConfirmDeleteDialog> {
           Text(
             widget.description ?? '',
           ),
+          ...widget.extraDescription != null
+              ? [
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 300,
+                      minHeight: 0,
+                    ),
+                    child: widget.extraDescription!,
+                  )
+                ]
+              : []
         ],
       ),
       actions: [

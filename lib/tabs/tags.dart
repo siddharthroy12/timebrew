@@ -193,14 +193,43 @@ class TagEntry extends StatelessWidget {
             value: 'delete',
             child: const Text('Delete'),
             onTap: () {
+              final isar = IsarService();
+
               showDialog<void>(
                 context: context,
                 builder: (context) {
                   return ConfirmDeleteDialog(
-                    description: 'Are you sure you want to delete $name',
+                    description: 'Are you sure you want to delete tag "$name"',
+                    extraDescription: FutureBuilder(
+                        future: isar.getTasksWithOnlyOneTag(id),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            if (snapshot.data!.isEmpty) {
+                              return const SizedBox(
+                                height: 0,
+                              );
+                            }
+                            return SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'This will delete these tasks and it\'s timelogs',
+                                  ),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  ...snapshot.data!
+                                      .map((e) => Text(e.name))
+                                      .toList()
+                                ],
+                              ),
+                            );
+                          }
+                          return const CircularProgressIndicator();
+                        }),
                     onConfirm: () {
-                      final isar = IsarService();
-
                       isar.deleteTag(id);
 
                       final snackBar = SnackBar(

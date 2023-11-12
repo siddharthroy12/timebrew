@@ -119,187 +119,191 @@ class _CreateTimelogDialogState extends State<CreateTimelogDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: LayoutBuilder(builder: (context, constrains) {
-            bool shouldShowTimeIcon = MediaQuery.of(context).size.width > 450;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                Text(
-                  widget.id == null ? 'Add Timelog' : 'Update Timelog',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                StreamBuilder<List<Task>>(
-                  initialData: const [],
-                  stream: _isar.getTaskStream(),
-                  builder: (context, tasks) {
-                    List<DropdownMenuEntry> dropdownMenuEntries = [];
+      content: ScrollConfiguration(
+        behavior: const ScrollBehavior(),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: LayoutBuilder(builder: (context, constrains) {
+              bool shouldShowTimeIcon = MediaQuery.of(context).size.width > 450;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Text(
+                    widget.id == null ? 'Add Timelog' : 'Update Timelog',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  StreamBuilder<List<Task>>(
+                    initialData: const [],
+                    stream: _isar.getTaskStream(),
+                    builder: (context, tasks) {
+                      List<DropdownMenuEntry> dropdownMenuEntries = [];
 
-                    for (var task in tasks.data!) {
-                      dropdownMenuEntries.add(
-                        DropdownMenuEntry(
-                          value: task.id,
-                          label: task.name,
-                          style: ButtonStyle(
-                            padding: MaterialStateProperty.resolveWith(
-                              (states) => const EdgeInsets.symmetric(
-                                horizontal: 40,
-                                vertical: 10,
+                      for (var task in tasks.data!) {
+                        dropdownMenuEntries.add(
+                          DropdownMenuEntry(
+                            value: task.id,
+                            label: task.name,
+                            style: ButtonStyle(
+                              padding: MaterialStateProperty.resolveWith(
+                                (states) => const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 10,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        );
+                      }
+
+                      return DropdownMenu(
+                        initialSelection: _task?.id,
+                        width: constrains.maxWidth,
+                        menuHeight: 300,
+                        enableFilter: false,
+                        leadingIcon: const Icon(Icons.checklist_rounded),
+                        label: const Text('Task'),
+                        onSelected: (taskId) async {
+                          var task = await _isar.getTaskById(taskId);
+
+                          setState(() => _task = task);
+                        },
+                        dropdownMenuEntries: dropdownMenuEntries,
                       );
-                    }
-
-                    return DropdownMenu(
-                      initialSelection: _task?.id,
-                      width: constrains.maxWidth,
-                      menuHeight: 300,
-                      enableFilter: false,
-                      leadingIcon: const Icon(Icons.checklist_rounded),
-                      label: const Text('Task'),
-                      onSelected: (taskId) async {
-                        var task = await _isar.getTaskById(taskId);
-
-                        setState(() => _task = task);
-                      },
-                      dropdownMenuEntries: dropdownMenuEntries,
-                    );
-                  },
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                TextField(
-                  controller: _descriptionFieldController,
-                  cursorHeight: 20,
-                  style: const TextStyle(height: 1.2),
-                  decoration: const InputDecoration(label: Text('Description')),
-                  onChanged: (String value) {
-                    setState(() {
-                      _descriptionFieldController.text = value;
-                    });
-                  },
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    showDatePicker(
-                      context: context,
-                      initialDate: DateTime.fromMillisecondsSinceEpoch(
-                        _endTime,
-                      ),
-                      firstDate: DateTime.fromMillisecondsSinceEpoch(
-                        _endTime,
-                      ).subtract(
-                        const Duration(days: 30),
-                      ),
-                      lastDate: DateTime.now(),
-                    ).then(_setDate);
-                  },
-                  icon: const Icon(Icons.calendar_month_rounded),
-                  label: Text(
-                    DateTime.fromMillisecondsSinceEpoch(_endTime)
-                        .toDateString(),
+                    },
                   ),
-                  style: ButtonStyle(
-                    shape: MaterialStateProperty.resolveWith(
-                      (states) => const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(4),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  TextField(
+                    controller: _descriptionFieldController,
+                    cursorHeight: 20,
+                    style: const TextStyle(height: 1.2),
+                    decoration:
+                        const InputDecoration(label: Text('Description')),
+                    onChanged: (String value) {
+                      setState(() {
+                        _descriptionFieldController.text = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      showDatePicker(
+                        context: context,
+                        initialDate: DateTime.fromMillisecondsSinceEpoch(
+                          _endTime,
+                        ),
+                        firstDate: DateTime.fromMillisecondsSinceEpoch(
+                          _endTime,
+                        ).subtract(
+                          const Duration(days: 30),
+                        ),
+                        lastDate: DateTime.now(),
+                      ).then(_setDate);
+                    },
+                    icon: const Icon(Icons.calendar_month_rounded),
+                    label: Text(
+                      DateTime.fromMillisecondsSinceEpoch(_endTime)
+                          .toDateString(),
+                    ),
+                    style: ButtonStyle(
+                      shape: MaterialStateProperty.resolveWith(
+                        (states) => const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(4),
+                          ),
                         ),
                       ),
-                    ),
-                    minimumSize: MaterialStateProperty.resolveWith(
-                      (states) => const Size.fromHeight(50),
+                      minimumSize: MaterialStateProperty.resolveWith(
+                        (states) => const Size.fromHeight(50),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          showTimePicker(
-                            context: context,
-                            initialTime: TimeOfDay.fromDateTime(
-                              DateTime.fromMillisecondsSinceEpoch(_startTime),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(
+                                DateTime.fromMillisecondsSinceEpoch(_startTime),
+                              ),
+                            ).then(_setStartTime);
+                          },
+                          icon: shouldShowTimeIcon
+                              ? const Icon(Icons.access_time_rounded)
+                              : Container(),
+                          label: Text(millisecondsToTime(_startTime)),
+                          style: OutlinedButton.styleFrom(
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(4),
+                              ),
                             ),
-                          ).then(_setStartTime);
-                        },
-                        icon: shouldShowTimeIcon
-                            ? const Icon(Icons.access_time_rounded)
-                            : Container(),
-                        label: Text(millisecondsToTime(_startTime)),
-                        style: OutlinedButton.styleFrom(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(4),
+                            minimumSize: const Size.fromHeight(50),
+                            side: BorderSide(
+                              color: (_endTime > _startTime)
+                                  ? Theme.of(context).colorScheme.outline
+                                  : Theme.of(context).colorScheme.error,
                             ),
-                          ),
-                          minimumSize: const Size.fromHeight(50),
-                          side: BorderSide(
-                            color: (_endTime > _startTime)
-                                ? Theme.of(context).colorScheme.outline
-                                : Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(
-                      width: 50,
-                      child: Icon(Icons.arrow_forward_rounded),
-                    ),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          showTimePicker(
-                            context: context,
-                            initialTime: TimeOfDay.fromDateTime(
-                              DateTime.fromMillisecondsSinceEpoch(_endTime),
+                      const SizedBox(
+                        width: 50,
+                        child: Icon(Icons.arrow_forward_rounded),
+                      ),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.fromDateTime(
+                                DateTime.fromMillisecondsSinceEpoch(_endTime),
+                              ),
+                            ).then(_setEndTime);
+                          },
+                          icon: shouldShowTimeIcon
+                              ? const Icon(Icons.access_time_rounded)
+                              : Container(),
+                          label: Text(millisecondsToTime(_endTime)),
+                          style: OutlinedButton.styleFrom(
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(4),
+                              ),
                             ),
-                          ).then(_setEndTime);
-                        },
-                        icon: shouldShowTimeIcon
-                            ? const Icon(Icons.access_time_rounded)
-                            : Container(),
-                        label: Text(millisecondsToTime(_endTime)),
-                        style: OutlinedButton.styleFrom(
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(4),
+                            minimumSize: const Size.fromHeight(50),
+                            side: BorderSide(
+                              color: (_endTime > _startTime)
+                                  ? Theme.of(context).colorScheme.outline
+                                  : Theme.of(context).colorScheme.error,
                             ),
-                          ),
-                          minimumSize: const Size.fromHeight(50),
-                          side: BorderSide(
-                            color: (_endTime > _startTime)
-                                ? Theme.of(context).colorScheme.outline
-                                : Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                )
-              ],
-            );
-          }),
+                    ],
+                  )
+                ],
+              );
+            }),
+          ),
         ),
       ),
       actions: [
