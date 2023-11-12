@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/services/isar_service.dart';
@@ -56,7 +57,7 @@ class _StatsState extends State<Stats> {
   @override
   void didUpdateWidget(covariant Stats oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedTags != widget.selectedTags) {
+    if (!mapEquals(oldWidget.selectedTags, widget.selectedTags)) {
       _isar.getTimelogStream().first.then(_loadDaysInWeeks);
     }
   }
