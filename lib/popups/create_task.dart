@@ -90,7 +90,7 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
               controller: linkFieldContoller,
               cursorHeight: 20,
               style: const TextStyle(height: 1.2),
-              decoration: const InputDecoration(label: Text('Link')),
+              decoration: const InputDecoration(label: Text('Link (optional)')),
               onChanged: (String value) {
                 setState(() {
                   link = value;
@@ -166,6 +166,28 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
                 );
               },
             ),
+            selectedTags.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        Text(
+                          'Must have one atleast tag selected',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Container()
           ],
         ),
       ),
@@ -175,7 +197,9 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
           child: const Text('CLOSE'),
         ),
         TextButton(
-          onPressed: name.isNotEmpty ? () => _onSave(context) : null,
+          onPressed: name.isNotEmpty && selectedTags.isNotEmpty
+              ? () => _onSave(context)
+              : null,
           child: const Text('SAVE'),
         ),
       ],
