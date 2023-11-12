@@ -7,6 +7,7 @@ import 'package:timebrew/models/task.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/tabs/timelogs.dart';
 import 'package:timebrew/utils.dart';
 import 'package:timebrew/widgets/no_data_emoji.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -140,7 +141,18 @@ class TaskEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      onTap: () {},
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(title: Text('$name Timelogs')),
+              body: Timelogs(
+                selectedTask: id,
+              ),
+            ),
+          ),
+        );
+      },
       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       subtitle: tags.isNotEmpty
           ? Padding(

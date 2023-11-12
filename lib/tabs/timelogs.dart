@@ -10,9 +10,14 @@ import '../widgets/grouped_list.dart';
 import 'package:timebrew/utils.dart';
 
 class Timelogs extends StatefulWidget {
-  final Map<Id, bool> selectedTags;
+  final Map<Id, bool>? selectedTags;
+  final Id? selectedTask;
 
-  const Timelogs({super.key, required this.selectedTags});
+  const Timelogs({
+    super.key,
+    this.selectedTags,
+    this.selectedTask,
+  });
 
   @override
   State<Timelogs> createState() => _TimelogsState();
@@ -39,18 +44,29 @@ class _TimelogsState extends State<Timelogs>
           builder: (context, snapshot) {
             var filteredList = snapshot.data ?? [];
 
-            filteredList = filteredList.where(
-              (element) {
-                if (element.task.value != null) {
-                  return element.task.value!.tags
-                      .where(
-                          (element) => widget.selectedTags[element.id] ?? true)
-                      .isNotEmpty;
-                } else {
-                  return widget.selectedTags.containsValue(false);
-                }
-              },
-            ).toList();
+            // Filter task
+            if (widget.selectedTask != null) {
+              filteredList = filteredList.where((element) {
+                return element.task.value != null &&
+                    element.task.value!.id == widget.selectedTask;
+              }).toList();
+            }
+
+            if (widget.selectedTags != null) {
+              // Filter tags
+              filteredList = filteredList.where(
+                (element) {
+                  if (element.task.value != null) {
+                    return element.task.value!.tags
+                        .where((element) =>
+                            widget.selectedTags![element.id] ?? true)
+                        .isNotEmpty;
+                  } else {
+                    return widget.selectedTags!.containsValue(false);
+                  }
+                },
+              ).toList();
+            }
 
             if (filteredList.isEmpty) {
               return const NoDataEmoji();
