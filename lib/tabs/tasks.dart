@@ -268,11 +268,12 @@ class TaskEntry extends StatelessWidget {
                 context: context,
                 builder: (context) {
                   return ConfirmDeleteDialog(
-                    description: 'Are you sure you want to delete $name',
+                    description:
+                        'Are you sure you want to delete task "$name" and all it\'s timelogs?',
                     onConfirm: () {
                       final isar = IsarService();
 
-                      isar.deleteTask(id, false);
+                      isar.deleteTask(id, true);
 
                       final snackBar = SnackBar(
                         content: Text('Task $name deleted'),
