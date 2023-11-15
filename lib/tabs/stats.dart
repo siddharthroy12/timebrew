@@ -43,7 +43,6 @@ class _StatsState extends State<Stats> {
 
   void _loadDaysInWeeks(timelogs) {
     if (mounted) {
-      print('loadDaysInWeeks');
       var (daysInWeeks, _) = getStatsHours(timelogs, widget.selectedTags);
       setState(() {
         _isLoading = false;
