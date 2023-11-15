@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
+import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
@@ -24,34 +25,43 @@ class _StatsState extends State<Stats> {
   bool _isLoading = true;
   int _outerIndex = 0;
   int _innerIndex = 0;
+  late Future<List<Timelog>> _timelogsFuture;
   PageController _controller = PageController();
 
   @override
   void initState() {
     super.initState();
+    _timelogsFuture = _isar.getTimelogStream().first;
+    _timelogsFuture.then(_loadDaysInWeeks);
+  }
 
-    _isar.getTimelogStream().first.then(_loadDaysInWeeks);
+  @override
+  void dispose() {
+    super.dispose();
+    _timelogsFuture.ignore();
   }
 
   void _loadDaysInWeeks(timelogs) {
-    var (daysInWeeks, _) = getStatsHours(timelogs, widget.selectedTags);
-    setState(() {
-      _isLoading = false;
-      _daysInWeeks = daysInWeeks;
-      if (daysInWeeks.isNotEmpty) {
-        int finalInnerIndex = 0;
+    if (mounted) {
+      var (daysInWeeks, _) = getStatsHours(timelogs, widget.selectedTags);
+      setState(() {
+        _isLoading = false;
+        _daysInWeeks = daysInWeeks;
+        if (daysInWeeks.isNotEmpty) {
+          int finalInnerIndex = 0;
 
-        _outerIndex = daysInWeeks.length - 1;
-        _controller = PageController(initialPage: _outerIndex);
+          _outerIndex = daysInWeeks.length - 1;
+          _controller = PageController(initialPage: _outerIndex);
 
-        for (var i = 0; i < daysInWeeks[_outerIndex].length; i++) {
-          if (daysInWeeks[_outerIndex][i].totalHours != 0) {
-            finalInnerIndex = i;
+          for (var i = 0; i < daysInWeeks[_outerIndex].length; i++) {
+            if (daysInWeeks[_outerIndex][i].totalHours != 0) {
+              finalInnerIndex = i;
+            }
           }
+          _innerIndex = finalInnerIndex;
         }
-        _innerIndex = finalInnerIndex;
-      }
-    });
+      });
+    }
   }
 
   @override
@@ -299,27 +309,33 @@ class MomentRingChart extends StatefulWidget {
 class _MomentRingChartState extends State<MomentRingChart> {
   final isar = IsarService();
   Map<Id, String> names = {};
+  late Future _calculateNamesFuture;
 
   @override
   void initState() {
     super.initState();
-    _calculateNames();
+    _calculateNamesFuture = _calculateNames();
   }
 
   @override
   void didUpdateWidget(covariant MomentRingChart oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _calculateNames();
+    _calculateNamesFuture = _calculateNames();
   }
 
-  void _calculateNames() {
+  Future _calculateNames() async {
     for (var element in widget.momentHours.taskHours.entries) {
-      isar.getTaskById(element.key).then((value) {
-        setState(() {
-          names[element.key] = value?.name ?? 'dsf';
-        });
+      var value = await isar.getTaskById(element.key);
+      setState(() {
+        names[element.key] = value?.name ?? 'dsf';
       });
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _calculateNamesFuture.ignore();
   }
 
   @override
