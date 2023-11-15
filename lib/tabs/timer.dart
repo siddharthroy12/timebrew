@@ -187,8 +187,8 @@ class _TimerState extends State<Timer>
 
     final buttonPadding = MaterialStateProperty.resolveWith(
       (states) => const EdgeInsets.only(
-        top: 16,
-        bottom: 16,
+        top: 18,
+        bottom: 18,
         left: 16,
         right: 6 + 16,
       ),
