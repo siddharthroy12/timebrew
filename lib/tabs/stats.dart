@@ -75,6 +75,7 @@ class _StatsState extends State<Stats> {
 
   void _selectNextMoment() {
     setState(() {
+      int previousOuterIndex = _outerIndex;
       if (_innerIndex == _daysInWeeks[_outerIndex].length - 1) {
         if (_outerIndex < _daysInWeeks.length - 1) {
           _outerIndex += 1;
@@ -91,19 +92,16 @@ class _StatsState extends State<Stats> {
           if (_daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
             if (_outerIndex < _daysInWeeks.length - 1) {
               _outerIndex += 1;
-              int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
-              for (var i = finalInnerIndex; i > 0; i--) {
-                if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-                  finalInnerIndex = i;
-                }
-              }
-              _innerIndex = finalInnerIndex;
             } else {
               _innerIndex = oldIndex;
             }
           }
         }
       }
+      if (previousOuterIndex < _outerIndex) {
+        _innerIndex = 0;
+      }
+
       _controller.animateToPage(
         _outerIndex,
         duration: const Duration(milliseconds: 250),
@@ -113,8 +111,8 @@ class _StatsState extends State<Stats> {
   }
 
   void _selectPreviousMoment() {
+    int previousOuterIndex = _outerIndex;
     setState(() {
-      int previousOuterIndex = _outerIndex;
       if (_innerIndex == 0) {
         if (_outerIndex > 0) {
           _outerIndex -= 1;
@@ -132,42 +130,14 @@ class _StatsState extends State<Stats> {
           if (_daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
             if (_outerIndex > 0) {
               _outerIndex -= 1;
-              int finalInnerIndex = 0;
-              for (var i = finalInnerIndex;
-                  i < _daysInWeeks[_outerIndex].length;
-                  i++) {
-                if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-                  finalInnerIndex = i;
-                }
-              }
-              _innerIndex = finalInnerIndex;
             } else {
               _innerIndex = oldIndex;
             }
           }
         }
       }
-
-      if (_outerIndex > previousOuterIndex) {
-        int finalInnerIndex = 0;
-        for (var i = finalInnerIndex;
-            i < _daysInWeeks[_outerIndex].length;
-            i++) {
-          if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-            finalInnerIndex = i;
-            break;
-          }
-        }
-        _innerIndex = finalInnerIndex;
-      } else if (_outerIndex < previousOuterIndex) {
-        int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
-        for (var i = finalInnerIndex; i > 0; i--) {
-          if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-            finalInnerIndex = i;
-            break;
-          }
-        }
-        _innerIndex = finalInnerIndex;
+      if (previousOuterIndex > _outerIndex) {
+        _innerIndex = _daysInWeeks[_outerIndex].length - 1;
       }
       _controller.animateToPage(
         _outerIndex,
@@ -250,6 +220,32 @@ class _StatsState extends State<Stats> {
           child: PageView.builder(
             itemCount: _daysInWeeks.length,
             controller: _controller,
+            onPageChanged: (newOuterIndex) {
+              setState(() {
+                _outerIndex = newOuterIndex;
+                if (_innerIndex == 0) {
+                  int finalInnerIndex = 0;
+                  for (var i = finalInnerIndex;
+                      i < _daysInWeeks[_outerIndex].length;
+                      i++) {
+                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+                      finalInnerIndex = i;
+                      break;
+                    }
+                  }
+                  _innerIndex = finalInnerIndex;
+                } else if (_outerIndex < _daysInWeeks[_outerIndex].length - 1) {
+                  int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
+                  for (var i = finalInnerIndex; i > 0; i--) {
+                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+                      finalInnerIndex = i;
+                      break;
+                    }
+                  }
+                  _innerIndex = finalInnerIndex;
+                }
+              });
+            },
             itemBuilder: (context, index) {
               return ListenableBuilder(
                 listenable: _controller,
