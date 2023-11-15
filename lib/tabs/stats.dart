@@ -43,6 +43,7 @@ class _StatsState extends State<Stats> {
 
   void _loadDaysInWeeks(timelogs) {
     if (mounted) {
+      print('loadDaysInWeeks');
       var (daysInWeeks, _) = getStatsHours(timelogs, widget.selectedTags);
       setState(() {
         _isLoading = false;
@@ -113,6 +114,7 @@ class _StatsState extends State<Stats> {
 
   void _selectPreviousMoment() {
     setState(() {
+      int previousOuterIndex = _outerIndex;
       if (_innerIndex == 0) {
         if (_outerIndex > 0) {
           _outerIndex -= 1;
@@ -144,6 +146,28 @@ class _StatsState extends State<Stats> {
             }
           }
         }
+      }
+
+      if (_outerIndex > previousOuterIndex) {
+        int finalInnerIndex = 0;
+        for (var i = finalInnerIndex;
+            i < _daysInWeeks[_outerIndex].length;
+            i++) {
+          if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+            finalInnerIndex = i;
+            break;
+          }
+        }
+        _innerIndex = finalInnerIndex;
+      } else if (_outerIndex < previousOuterIndex) {
+        int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
+        for (var i = finalInnerIndex; i > 0; i--) {
+          if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+            finalInnerIndex = i;
+            break;
+          }
+        }
+        _innerIndex = finalInnerIndex;
       }
       _controller.animateToPage(
         _outerIndex,
@@ -226,34 +250,6 @@ class _StatsState extends State<Stats> {
           child: PageView.builder(
             itemCount: _daysInWeeks.length,
             controller: _controller,
-            onPageChanged: (value) {
-              if (_outerIndex < value) {
-                setState(() {
-                  _outerIndex = value;
-
-                  int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
-                  for (var i = finalInnerIndex; i > 0; i--) {
-                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-                      finalInnerIndex = i;
-                    }
-                  }
-                  _innerIndex = finalInnerIndex;
-                });
-              } else if (_outerIndex > value) {
-                setState(() {
-                  _outerIndex = value;
-                  int finalInnerIndex = 0;
-                  for (var i = finalInnerIndex;
-                      i < _daysInWeeks[_outerIndex].length;
-                      i++) {
-                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-                      finalInnerIndex = i;
-                    }
-                  }
-                  _innerIndex = finalInnerIndex;
-                });
-              }
-            },
             itemBuilder: (context, index) {
               return ListenableBuilder(
                 listenable: _controller,
