@@ -151,7 +151,7 @@ class _TimerState extends State<Timer>
         if (_timer != null && _timer!.isActive) {
           _timer!.cancel();
         }
-        _pausedTimelogsTimespent += _timeSinceStart;
+        _pausedTimelogsTimespent = _timeSinceStart;
         _trackingTimelog!.endTime = DateTime.now().millisecondsSinceEpoch;
         _trackingTimelog!.running = false;
         _trackingTimelog!.paused = true;
