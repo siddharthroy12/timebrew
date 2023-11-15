@@ -37,6 +37,8 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   bool _hasSpaceForRightPanel = false;
   bool _searchMode = false;
   final TextEditingController _searchInputController = TextEditingController();
+  final PageController _pageController = PageController(initialPage: 0);
+
   String _searchString = "";
   List<Tag> _tags = [];
   Map<Id, bool> _selectedTags = {};
@@ -71,6 +73,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
 
   void _onDestinationChange(int index) {
     setState(() {
+      _pageController.jumpToPage(index);
       _tabIndex = index;
     });
     _toggleSearchMode(false);
@@ -250,24 +253,28 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                 )
               ],
             ),
-            body: [
-              Timer(
-                selectedTags: _selectedTags,
-              ),
-              Timelogs(
-                selectedTags: _selectedTags,
-              ),
-              Tasks(
-                searchString: _searchString,
-                selectedTags: _selectedTags,
-              ),
-              Tags(
-                searchString: _searchString,
-              ),
-              Stats(
-                selectedTags: Map.of(_selectedTags),
-              ),
-            ][_tabIndex],
+            body: PageView(
+              physics: const NeverScrollableScrollPhysics(),
+              controller: _pageController,
+              children: [
+                Timer(
+                  selectedTags: _selectedTags,
+                ),
+                Timelogs(
+                  selectedTags: _selectedTags,
+                ),
+                Tasks(
+                  searchString: _searchString,
+                  selectedTags: _selectedTags,
+                ),
+                Tags(
+                  searchString: _searchString,
+                ),
+                Stats(
+                  selectedTags: Map.of(_selectedTags),
+                ),
+              ],
+            ),
             bottomNavigationBar: !_desktopView
                 ? NavigationBar(
                     onDestinationSelected: _onDestinationChange,

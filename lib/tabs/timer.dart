@@ -18,7 +18,8 @@ class Timer extends StatefulWidget {
   State<Timer> createState() => _TimerState();
 }
 
-class _TimerState extends State<Timer> {
+class _TimerState extends State<Timer>
+    with AutomaticKeepAliveClientMixin<Timer> {
   final _isar = IsarService();
   final _descriptionEditorController = TextEditingController();
   Id? _selectedTask;
@@ -33,6 +34,9 @@ class _TimerState extends State<Timer> {
     super.initState();
     _initTimerState();
   }
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void dispose() {
@@ -179,6 +183,8 @@ class _TimerState extends State<Timer> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final buttonPadding = MaterialStateProperty.resolveWith(
       (states) => const EdgeInsets.only(
         top: 16,
