@@ -27,13 +27,18 @@ const TimelogSchema = CollectionSchema(
       name: r'endTime',
       type: IsarType.long,
     ),
-    r'running': PropertySchema(
+    r'paused': PropertySchema(
       id: 2,
+      name: r'paused',
+      type: IsarType.bool,
+    ),
+    r'running': PropertySchema(
+      id: 3,
       name: r'running',
       type: IsarType.bool,
     ),
     r'startTime': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'startTime',
       type: IsarType.long,
     )
@@ -77,8 +82,9 @@ void _timelogSerialize(
 ) {
   writer.writeString(offsets[0], object.description);
   writer.writeLong(offsets[1], object.endTime);
-  writer.writeBool(offsets[2], object.running);
-  writer.writeLong(offsets[3], object.startTime);
+  writer.writeBool(offsets[2], object.paused);
+  writer.writeBool(offsets[3], object.running);
+  writer.writeLong(offsets[4], object.startTime);
 }
 
 Timelog _timelogDeserialize(
@@ -91,8 +97,9 @@ Timelog _timelogDeserialize(
   object.description = reader.readString(offsets[0]);
   object.endTime = reader.readLong(offsets[1]);
   object.id = id;
-  object.running = reader.readBool(offsets[2]);
-  object.startTime = reader.readLong(offsets[3]);
+  object.paused = reader.readBool(offsets[2]);
+  object.running = reader.readBool(offsets[3]);
+  object.startTime = reader.readLong(offsets[4]);
   return object;
 }
 
@@ -110,6 +117,8 @@ P _timelogDeserializeProp<P>(
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
+      return (reader.readBool(offset)) as P;
+    case 4:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -442,6 +451,16 @@ extension TimelogQueryFilter
     });
   }
 
+  QueryBuilder<Timelog, Timelog, QAfterFilterCondition> pausedEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'paused',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Timelog, Timelog, QAfterFilterCondition> runningEqualTo(
       bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -550,6 +569,18 @@ extension TimelogQuerySortBy on QueryBuilder<Timelog, Timelog, QSortBy> {
     });
   }
 
+  QueryBuilder<Timelog, Timelog, QAfterSortBy> sortByPaused() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paused', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Timelog, Timelog, QAfterSortBy> sortByPausedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paused', Sort.desc);
+    });
+  }
+
   QueryBuilder<Timelog, Timelog, QAfterSortBy> sortByRunning() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'running', Sort.asc);
@@ -613,6 +644,18 @@ extension TimelogQuerySortThenBy
     });
   }
 
+  QueryBuilder<Timelog, Timelog, QAfterSortBy> thenByPaused() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paused', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Timelog, Timelog, QAfterSortBy> thenByPausedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paused', Sort.desc);
+    });
+  }
+
   QueryBuilder<Timelog, Timelog, QAfterSortBy> thenByRunning() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'running', Sort.asc);
@@ -653,6 +696,12 @@ extension TimelogQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Timelog, Timelog, QDistinct> distinctByPaused() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'paused');
+    });
+  }
+
   QueryBuilder<Timelog, Timelog, QDistinct> distinctByRunning() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'running');
@@ -683,6 +732,12 @@ extension TimelogQueryProperty
   QueryBuilder<Timelog, int, QQueryOperations> endTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'endTime');
+    });
+  }
+
+  QueryBuilder<Timelog, bool, QQueryOperations> pausedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'paused');
     });
   }
 

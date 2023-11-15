@@ -11,4 +11,5 @@ class Timelog {
   late int startTime;
   late int endTime;
   late bool running;
+  late bool paused = false;
 }

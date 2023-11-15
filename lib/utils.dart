@@ -109,7 +109,11 @@ Future<String> convertTimelogsToCSV() async {
 }
 
 double getTimelogHours(Timelog timelog) {
-  return (timelog.endTime - timelog.startTime) / 3.6e+6;
+  return getTimelogTimeSpent(timelog) / 3.6e+6;
+}
+
+int getTimelogTimeSpent(Timelog timelog) {
+  return (timelog.endTime - timelog.startTime);
 }
 
 int hoursToMilliseconds(double hours) {

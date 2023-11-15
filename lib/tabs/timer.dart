@@ -5,6 +5,9 @@ import 'package:isar/isar.dart';
 import 'package:timebrew/models/task.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
+import 'package:timebrew/utils.dart';
+
+enum TimerState { stopped, running, paused }
 
 class Timer extends StatefulWidget {
   final Map<Id, bool> selectedTags;
@@ -15,59 +18,93 @@ class Timer extends StatefulWidget {
   State<Timer> createState() => _TimerState();
 }
 
-class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
+class _TimerState extends State<Timer> {
   final _isar = IsarService();
-  final descriptionEditorController = TextEditingController();
+  final _descriptionEditorController = TextEditingController();
   Id? _selectedTask;
   int _timeSinceStart = 0;
   Timelog? _trackingTimelog;
-  late async.Timer _timer;
+  async.Timer? _timer;
+  TimerState _timerState = TimerState.stopped;
+  int _pausedTimelogsTimespent = 0;
 
   @override
   initState() {
     super.initState();
-    checkForRunningTask();
+    _initTimerState();
   }
 
-  setSelectedTask(selectedTask) {
+  @override
+  void dispose() {
+    super.dispose();
+    if (_timer != null && _timer!.isActive) {
+      _timer!.cancel();
+    }
+  }
+
+  _setSelectedTask(selectedTask) {
     setState(() {
       _selectedTask = selectedTask;
     });
   }
 
-  void checkForRunningTask() async {
-    Timelog? timelog = await _isar.getRunningTimeLog();
+  void _initTimerState() async {
+    var pausedTimelogs = await _isar.getPausedTimelogs();
+    if (pausedTimelogs.isNotEmpty) {
+      Timelog latestTimelog = pausedTimelogs.first;
 
-    if (timelog != null) {
+      for (var timelog in pausedTimelogs) {
+        _pausedTimelogsTimespent += getTimelogTimeSpent(timelog);
+        if (timelog.endTime > latestTimelog.endTime) {
+          latestTimelog = timelog;
+        }
+      }
       setState(() {
-        _trackingTimelog = timelog;
-        _selectedTask = timelog.task.value?.id;
+        _trackingTimelog = latestTimelog;
+        _selectedTask = latestTimelog.task.value?.id;
+        _timerState = TimerState.paused;
+        _timeSinceStart = _pausedTimelogsTimespent;
       });
-      descriptionEditorController.text = timelog.description;
+    }
 
-      startUpdatingTime();
+    Timelog? runningTimelog = await _isar.getRunningTimelog();
+
+    if (runningTimelog != null) {
+      setState(() {
+        _trackingTimelog = runningTimelog;
+        _selectedTask = runningTimelog.task.value?.id;
+        _timerState = TimerState.running;
+      });
+      _descriptionEditorController.text = runningTimelog.description;
+
+      _startUpdatingTime();
     }
   }
 
-  void startUpdatingTime() {
+  void _updateTime() {
+    setState(() {
+      _timeSinceStart = _pausedTimelogsTimespent +
+          DateTime.now().millisecondsSinceEpoch -
+          _trackingTimelog!.startTime;
+    });
+  }
+
+  void _startUpdatingTime() {
     const oneSec = Duration(seconds: 1);
     _timer = async.Timer.periodic(
       oneSec,
       (async.Timer timer) {
-        setState(() {
-          _timeSinceStart = DateTime.now().millisecondsSinceEpoch -
-              _trackingTimelog!.startTime;
-        });
+        _updateTime();
       },
     );
   }
 
-  void startTracking() async {
+  void _startTracking() async {
     if (_selectedTask != null) {
       var now = DateTime.now().millisecondsSinceEpoch;
       Timelog? timelog = await _isar.addTimelog(
         _selectedTask!,
-        descriptionEditorController.text,
+        _descriptionEditorController.text,
         now,
         now,
         true,
@@ -75,44 +112,81 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
       if (timelog != null) {
         setState(() {
           _trackingTimelog = timelog;
+          _timerState = TimerState.running;
         });
 
-        startUpdatingTime();
+        _startUpdatingTime();
       }
     }
   }
 
-  void stopTracking() {
+  void _stopTracking() async {
     if (_trackingTimelog != null) {
       setState(() {
-        _timer.cancel();
+        if (_timer != null && _timer!.isActive) {
+          _timer!.cancel();
+        }
+        _pausedTimelogsTimespent = 0;
         _trackingTimelog!.endTime = DateTime.now().millisecondsSinceEpoch;
         _trackingTimelog!.running = false;
-        _isar.updateTimelog(_trackingTimelog!);
-        _trackingTimelog = null;
+        _trackingTimelog!.paused = false;
+
         _timeSinceStart = 0;
-
-        descriptionEditorController.text = "";
+        _timerState = TimerState.stopped;
+        _descriptionEditorController.text = "";
       });
+      await _isar.updateTimelog(_trackingTimelog!);
+      _trackingTimelog = null;
+      await _isar.unPauseAllTimelogs();
     }
   }
 
-  void toggleTracking() {
+  void _pauseTracking() async {
     if (_trackingTimelog != null) {
-      stopTracking();
-    } else {
-      startTracking();
+      setState(() {
+        if (_timer != null && _timer!.isActive) {
+          _timer!.cancel();
+        }
+        _pausedTimelogsTimespent += _timeSinceStart;
+        _trackingTimelog!.endTime = DateTime.now().millisecondsSinceEpoch;
+        _trackingTimelog!.running = false;
+        _trackingTimelog!.paused = true;
+
+        _timerState = TimerState.paused;
+      });
+      await _isar.updateTimelog(_trackingTimelog!);
     }
   }
 
-  @override
-  bool get wantKeepAlive => true;
+  void _resumeTracking() async {
+    if (_selectedTask != null) {
+      var now = DateTime.now().millisecondsSinceEpoch;
+      Timelog? timelog = await _isar.addTimelog(
+        _selectedTask!,
+        _descriptionEditorController.text,
+        now,
+        now,
+        true,
+      );
+      await _isar.updateTimelog(_trackingTimelog!);
+      setState(() {
+        _trackingTimelog = timelog;
+        _timerState = TimerState.running;
+      });
+      _startUpdatingTime();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    final running = _trackingTimelog != null;
+    final buttonPadding = MaterialStateProperty.resolveWith(
+      (states) => const EdgeInsets.only(
+        top: 16,
+        bottom: 16,
+        left: 16,
+        right: 6 + 16,
+      ),
+    );
 
     return Center(
       child: Row(
@@ -164,13 +238,71 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                     ],
                   );
                 }),
-                IconButton.filled(
-                  iconSize: 36,
-                  onPressed: _selectedTask != null ? toggleTracking : null,
-                  icon: Icon(
-                    running ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                  ),
-                ),
+                ..._timerState != TimerState.stopped
+                    ? [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _timerState == TimerState.paused
+                                ? FilledButton.icon(
+                                    style: ButtonStyle(
+                                      padding: buttonPadding,
+                                    ),
+                                    onPressed: _resumeTracking,
+                                    icon: const Icon(
+                                      Icons.play_arrow_rounded,
+                                    ),
+                                    label: const Text('Resume'),
+                                  )
+                                : FilledButton.icon(
+                                    style: ButtonStyle(
+                                      padding: buttonPadding,
+                                    ),
+                                    onPressed: _pauseTracking,
+                                    icon: const Icon(
+                                      Icons.pause_rounded,
+                                    ),
+                                    label: const Text('Pause'),
+                                  ),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            FilledButton.icon(
+                              style: ButtonStyle(
+                                padding: buttonPadding,
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith(
+                                  (states) =>
+                                      Theme.of(context).colorScheme.error,
+                                ),
+                                foregroundColor:
+                                    MaterialStateProperty.resolveWith(
+                                  (states) =>
+                                      Theme.of(context).colorScheme.onError,
+                                ),
+                              ),
+                              onPressed: _stopTracking,
+                              icon: const Icon(
+                                Icons.stop_rounded,
+                              ),
+                              label: const Text('Stop'),
+                            ),
+                          ],
+                        ),
+                      ]
+                    : [
+                        FilledButton.icon(
+                          style: ButtonStyle(
+                            padding: buttonPadding,
+                          ),
+                          onPressed:
+                              _selectedTask != null ? _startTracking : null,
+                          icon: const Icon(
+                            Icons.play_arrow_rounded,
+                          ),
+                          label: const Text('Start'),
+                        ),
+                      ],
                 const SizedBox(
                   height: 20,
                 ),
@@ -236,13 +368,13 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                                 initialSelection: _selectedTask,
                                 width: constraints.maxWidth,
                                 menuHeight: 300,
-                                enabled: !running,
-                                enableFilter: true,
+                                enabled: _timerState == TimerState.stopped,
+                                enableFilter: false,
                                 leadingIcon:
                                     const Icon(Icons.checklist_rounded),
                                 label: const Text('Task'),
                                 onSelected: (taskId) {
-                                  setSelectedTask(taskId);
+                                  _setSelectedTask(taskId);
                                 },
                                 dropdownMenuEntries: dropdownMenuEntries,
                               );
@@ -252,8 +384,8 @@ class _TimerState extends State<Timer> with AutomaticKeepAliveClientMixin {
                             height: 20,
                           ),
                           TextField(
-                            enabled: !running,
-                            controller: descriptionEditorController,
+                            enabled: _timerState == TimerState.stopped,
+                            controller: _descriptionEditorController,
                             cursorHeight: 20,
                             style: const TextStyle(height: 1.2),
                             decoration: const InputDecoration(

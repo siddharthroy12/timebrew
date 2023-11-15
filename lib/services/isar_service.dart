@@ -87,9 +87,27 @@ class IsarService {
     });
   }
 
-  Future<Timelog?> getRunningTimeLog() async {
+  Future<Timelog?> getRunningTimelog() async {
     final isar = await db;
     return isar.timelogs.filter().runningEqualTo(true).findFirst();
+  }
+
+  Future unPauseAllTimelogs() async {
+    final isar = await db;
+    final timelogs = await getPausedTimelogs();
+    await isar.writeTxn(() async {
+      for (var timelog in timelogs) {
+        timelog.paused = false;
+        await isar.timelogs.put(timelog);
+      }
+    });
+
+    return;
+  }
+
+  Future<List<Timelog>> getPausedTimelogs() async {
+    final isar = await db;
+    return isar.timelogs.filter().pausedEqualTo(true).findAll();
   }
 
   Future<void> deleteTimelog(Id id) async {
