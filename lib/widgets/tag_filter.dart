@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/models/tag.dart';
@@ -21,6 +22,7 @@ class _TagFilterState extends State<TagFilter> {
   List<Tag> _tags = [];
   final _isar = IsarService();
   late StreamSubscription _tagStreamSubscription;
+  ScrollController _scrollController = ScrollController();
   // Null means all
   Id? _selectedTag;
 
@@ -43,43 +45,52 @@ class _TagFilterState extends State<TagFilter> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      children: [
-        ChoiceChip(
-          selected: _selectedTag == null,
-          label: const Text('All'),
-          onSelected: (selected) {
-            setState(() {
-              _selectedTag = null;
-              widget.onSelectedTagChange(null);
-            });
-          },
-        ),
-        const SizedBox(
-          width: 10,
-        ),
-        ..._tags.map(
-          (e) => Row(
-            children: [
-              ChoiceChip(
-                label: Text(e.name),
-                selected: _selectedTag == e.id,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedTag = e.id;
-                    widget.onSelectedTagChange(e.id);
-                  });
-                },
-              ),
-              const SizedBox(
-                width: 10,
-              )
-            ],
+    return Listener(
+      onPointerSignal: (event) {
+        if (event is PointerScrollEvent) {
+          final offset = event.scrollDelta.dy;
+          _scrollController.jumpTo(_scrollController.offset + offset);
+        }
+      },
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        children: [
+          ChoiceChip(
+            selected: _selectedTag == null,
+            label: const Text('All'),
+            onSelected: (selected) {
+              setState(() {
+                _selectedTag = null;
+                widget.onSelectedTagChange(null);
+              });
+            },
           ),
-        )
-      ],
+          const SizedBox(
+            width: 10,
+          ),
+          ..._tags.map(
+            (e) => Row(
+              children: [
+                ChoiceChip(
+                  label: Text(e.name),
+                  selected: _selectedTag == e.id,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedTag = e.id;
+                      widget.onSelectedTagChange(e.id);
+                    });
+                  },
+                ),
+                const SizedBox(
+                  width: 10,
+                )
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:timebrew/models/task.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/utils.dart';
+import 'package:timebrew/widgets/app_bar_menu_button.dart';
 
 enum TimerState { stopped, running, paused }
 
@@ -192,215 +193,225 @@ class _TimerState extends State<Timer>
       ),
     );
 
-    return Center(
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Builder(builder: (context) {
-                  final durations = Duration(milliseconds: _timeSinceStart)
-                      .toString()
-                      .split('.')[0]
-                      .split(':');
+    return Scaffold(
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        title: const Text('Timer'),
+        actions: const [AppBarMenuButton()],
+      ),
+      body: Center(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Builder(builder: (context) {
+                    final durations = Duration(milliseconds: _timeSinceStart)
+                        .toString()
+                        .split('.')[0]
+                        .split(':');
 
-                  const durationTextStyle = TextStyle(
-                    fontSize: 50,
-                    fontWeight: FontWeight.bold,
-                  );
-                  const duration = Duration(milliseconds: 200);
-                  const curve = Curves.decelerate;
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedFlipCounter(
-                        duration: duration,
-                        curve: curve,
-                        value: int.parse(durations[0]),
-                        wholeDigits: 2,
-                        textStyle: durationTextStyle,
-                      ),
-                      const Text(':', style: durationTextStyle),
-                      AnimatedFlipCounter(
-                        duration: duration,
-                        curve: curve,
-                        value: int.parse(durations[1]),
-                        wholeDigits: 2,
-                        textStyle: durationTextStyle,
-                      ),
-                      const Text(':', style: durationTextStyle),
-                      AnimatedFlipCounter(
-                        duration: duration,
-                        curve: curve,
-                        value: int.parse(durations[2]),
-                        wholeDigits: 2,
-                        textStyle: durationTextStyle,
-                      ),
-                    ],
-                  );
-                }),
-                ..._timerState != TimerState.stopped
-                    ? [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _timerState == TimerState.paused
-                                ? FilledButton.icon(
-                                    style: ButtonStyle(
-                                      padding: buttonPadding,
-                                    ),
-                                    onPressed: _resumeTracking,
-                                    icon: const Icon(
-                                      Icons.play_arrow_rounded,
-                                    ),
-                                    label: const Text('Resume'),
-                                  )
-                                : FilledButton.icon(
-                                    style: ButtonStyle(
-                                      padding: buttonPadding,
-                                    ),
-                                    onPressed: _pauseTracking,
-                                    icon: const Icon(
-                                      Icons.pause_rounded,
-                                    ),
-                                    label: const Text('Pause'),
-                                  ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            FilledButton.icon(
-                              style: ButtonStyle(
-                                padding: buttonPadding,
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith(
-                                  (states) =>
-                                      Theme.of(context).colorScheme.error,
-                                ),
-                                foregroundColor:
-                                    MaterialStateProperty.resolveWith(
-                                  (states) =>
-                                      Theme.of(context).colorScheme.onError,
-                                ),
-                              ),
-                              onPressed: _stopTracking,
-                              icon: const Icon(
-                                Icons.stop_rounded,
-                              ),
-                              label: const Text('Stop'),
-                            ),
-                          ],
+                    const durationTextStyle = TextStyle(
+                      fontSize: 50,
+                      fontWeight: FontWeight.bold,
+                    );
+                    const duration = Duration(milliseconds: 200);
+                    const curve = Curves.decelerate;
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedFlipCounter(
+                          duration: duration,
+                          curve: curve,
+                          value: int.parse(durations[0]),
+                          wholeDigits: 2,
+                          textStyle: durationTextStyle,
                         ),
-                      ]
-                    : [
-                        FilledButton.icon(
-                          style: ButtonStyle(
-                            padding: buttonPadding,
-                          ),
-                          onPressed:
-                              _selectedTask != null ? _startTracking : null,
-                          icon: const Icon(
-                            Icons.play_arrow_rounded,
-                          ),
-                          label: const Text('Start'),
+                        const Text(':', style: durationTextStyle),
+                        AnimatedFlipCounter(
+                          duration: duration,
+                          curve: curve,
+                          value: int.parse(durations[1]),
+                          wholeDigits: 2,
+                          textStyle: durationTextStyle,
+                        ),
+                        const Text(':', style: durationTextStyle),
+                        AnimatedFlipCounter(
+                          duration: duration,
+                          curve: curve,
+                          value: int.parse(durations[2]),
+                          wholeDigits: 2,
+                          textStyle: durationTextStyle,
                         ),
                       ],
-                const SizedBox(
-                  height: 20,
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  constraints: const BoxConstraints(maxWidth: 500),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          StreamBuilder<List<Task>>(
-                            initialData: const [],
-                            stream: _isar.getTaskStream(),
-                            builder: (context, tasks) {
-                              List<DropdownMenuEntry> dropdownMenuEntries = [];
-
-                              for (var task in tasks.data!) {
-                                dropdownMenuEntries.add(
-                                  DropdownMenuEntry(
-                                    value: task.id,
-                                    label: task.name,
-                                    style: ButtonStyle(
-                                      padding:
-                                          MaterialStateProperty.resolveWith(
-                                        (states) => const EdgeInsets.symmetric(
-                                          horizontal: 40,
-                                          vertical: 10,
-                                        ),
+                    );
+                  }),
+                  ..._timerState != TimerState.stopped
+                      ? [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _timerState == TimerState.paused
+                                  ? FilledButton.icon(
+                                      style: ButtonStyle(
+                                        padding: buttonPadding,
                                       ),
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              if (dropdownMenuEntries.isEmpty) {
-                                dropdownMenuEntries.add(
-                                  DropdownMenuEntry(
-                                    enabled: false,
-                                    value: -1,
-                                    label: 'No task available',
-                                    style: ButtonStyle(
-                                      padding:
-                                          MaterialStateProperty.resolveWith(
-                                        (states) => const EdgeInsets.symmetric(
-                                          horizontal: 40,
-                                          vertical: 10,
-                                        ),
+                                      onPressed: _resumeTracking,
+                                      icon: const Icon(
+                                        Icons.play_arrow_rounded,
                                       ),
+                                      label: const Text('Resume'),
+                                    )
+                                  : FilledButton.icon(
+                                      style: ButtonStyle(
+                                        padding: buttonPadding,
+                                      ),
+                                      onPressed: _pauseTracking,
+                                      icon: const Icon(
+                                        Icons.pause_rounded,
+                                      ),
+                                      label: const Text('Pause'),
                                     ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              FilledButton.icon(
+                                style: ButtonStyle(
+                                  padding: buttonPadding,
+                                  backgroundColor:
+                                      MaterialStateProperty.resolveWith(
+                                    (states) =>
+                                        Theme.of(context).colorScheme.error,
                                   ),
-                                );
-                              }
-
-                              return DropdownMenu(
-                                initialSelection: _selectedTask,
-                                width: constraints.maxWidth,
-                                menuHeight: 300,
-                                enabled: _timerState == TimerState.stopped,
-                                enableFilter: false,
-                                leadingIcon:
-                                    const Icon(Icons.checklist_rounded),
-                                label: const Text('Task'),
-                                onSelected: (taskId) {
-                                  _setSelectedTask(taskId);
-                                },
-                                dropdownMenuEntries: dropdownMenuEntries,
-                              );
-                            },
+                                  foregroundColor:
+                                      MaterialStateProperty.resolveWith(
+                                    (states) =>
+                                        Theme.of(context).colorScheme.onError,
+                                  ),
+                                ),
+                                onPressed: _stopTracking,
+                                icon: const Icon(
+                                  Icons.stop_rounded,
+                                ),
+                                label: const Text('Stop'),
+                              ),
+                            ],
                           ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          TextField(
-                            enabled: _timerState == TimerState.stopped,
-                            controller: _descriptionEditorController,
-                            cursorHeight: 20,
-                            style: const TextStyle(height: 1.2),
-                            decoration: const InputDecoration(
-                              labelText: 'Task Description',
+                        ]
+                      : [
+                          FilledButton.icon(
+                            style: ButtonStyle(
+                              padding: buttonPadding,
                             ),
+                            onPressed:
+                                _selectedTask != null ? _startTracking : null,
+                            icon: const Icon(
+                              Icons.play_arrow_rounded,
+                            ),
+                            label: const Text('Start'),
                           ),
                         ],
-                      );
-                    },
+                  const SizedBox(
+                    height: 20,
                   ),
-                ),
-                const SizedBox(
-                  height: 70,
-                )
-              ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            StreamBuilder<List<Task>>(
+                              initialData: const [],
+                              stream: _isar.getTaskStream(),
+                              builder: (context, tasks) {
+                                List<DropdownMenuEntry> dropdownMenuEntries =
+                                    [];
+
+                                for (var task in tasks.data!) {
+                                  dropdownMenuEntries.add(
+                                    DropdownMenuEntry(
+                                      value: task.id,
+                                      label: task.name,
+                                      style: ButtonStyle(
+                                        padding:
+                                            MaterialStateProperty.resolveWith(
+                                          (states) =>
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 40,
+                                            vertical: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                if (dropdownMenuEntries.isEmpty) {
+                                  dropdownMenuEntries.add(
+                                    DropdownMenuEntry(
+                                      enabled: false,
+                                      value: -1,
+                                      label: 'No task available',
+                                      style: ButtonStyle(
+                                        padding:
+                                            MaterialStateProperty.resolveWith(
+                                          (states) =>
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 40,
+                                            vertical: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                return DropdownMenu(
+                                  initialSelection: _selectedTask,
+                                  width: constraints.maxWidth,
+                                  menuHeight: 300,
+                                  enabled: _timerState == TimerState.stopped,
+                                  enableFilter: false,
+                                  leadingIcon:
+                                      const Icon(Icons.checklist_rounded),
+                                  label: const Text('Task'),
+                                  onSelected: (taskId) {
+                                    _setSelectedTask(taskId);
+                                  },
+                                  dropdownMenuEntries: dropdownMenuEntries,
+                                );
+                              },
+                            ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            TextField(
+                              enabled: _timerState == TimerState.stopped,
+                              controller: _descriptionEditorController,
+                              cursorHeight: 20,
+                              style: const TextStyle(height: 1.2),
+                              decoration: const InputDecoration(
+                                labelText: 'Task Description',
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 70,
+                  )
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

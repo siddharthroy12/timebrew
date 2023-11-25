@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/date_time.dart';
@@ -28,6 +29,7 @@ class _TimelogsState extends State<Timelogs>
   Id? _selectedTag;
   final _isar = IsarService();
   Map<String, List<Timelog>> _groupedTimelogs = {};
+  ScrollController _dateScrollController = ScrollController();
   final List<String> _dates = [];
   String selectedDate = 'Logs';
   int _minDateTimestamp = 0;
@@ -45,45 +47,48 @@ class _TimelogsState extends State<Timelogs>
 
   void _loadTimelogs() {
     _isar.getTimelogStream().listen((timelogs) {
-      final Map<String, List<Timelog>> groupedTimelogs = {};
-      // Group timelogs and Calculate minimum and maximum date
       if (timelogs.isNotEmpty) {
-        _minDateTimestamp = timelogs.first.endTime;
-        _maxDateTimestamp = timelogs.first.endTime;
-      }
-      for (var timelog in timelogs) {
-        if (timelog.endTime < _minDateTimestamp) {
-          _minDateTimestamp = timelog.endTime;
+        final Map<String, List<Timelog>> groupedTimelogs = {};
+        // Group timelogs and Calculate minimum and maximum date
+        if (timelogs.isNotEmpty) {
+          _minDateTimestamp = timelogs.first.endTime;
+          _maxDateTimestamp = timelogs.first.endTime;
+        }
+        for (var timelog in timelogs) {
+          if (timelog.endTime < _minDateTimestamp) {
+            _minDateTimestamp = timelog.endTime;
+          }
+
+          if (timelog.endTime > _maxDateTimestamp) {
+            _maxDateTimestamp = timelog.endTime;
+          }
+
+          final dateTimeString =
+              DateTime.fromMillisecondsSinceEpoch(timelog.endTime)
+                  .toDateString();
+          if (groupedTimelogs.containsKey(dateTimeString)) {
+            groupedTimelogs[dateTimeString]!.add(timelog);
+          } else {
+            groupedTimelogs[dateTimeString] = [timelog];
+          }
         }
 
-        if (timelog.endTime > _maxDateTimestamp) {
-          _maxDateTimestamp = timelog.endTime;
+        _minDateTimestamp -= Duration.millisecondsPerDay * 30;
+
+        for (var currentDate =
+                DateTime.fromMillisecondsSinceEpoch(_maxDateTimestamp);
+            currentDate.millisecondsSinceEpoch >= _minDateTimestamp;
+            currentDate = currentDate.subtract(const Duration(days: 1))) {
+          final dateTimeString = currentDate.toDateString();
+          _dates.add(dateTimeString);
         }
 
-        final dateTimeString =
-            DateTime.fromMillisecondsSinceEpoch(timelog.endTime).toDateString();
-        if (groupedTimelogs.containsKey(dateTimeString)) {
-          groupedTimelogs[dateTimeString]!.add(timelog);
-        } else {
-          groupedTimelogs[dateTimeString] = [timelog];
-        }
+        selectedDate = DateTime.fromMillisecondsSinceEpoch(_maxDateTimestamp)
+            .toDateString();
+        setState(() {
+          _groupedTimelogs = groupedTimelogs;
+        });
       }
-
-      _minDateTimestamp -= Duration.millisecondsPerDay * 5;
-
-      for (var currentDate =
-              DateTime.fromMillisecondsSinceEpoch(_maxDateTimestamp);
-          currentDate.millisecondsSinceEpoch >= _minDateTimestamp;
-          currentDate = currentDate.subtract(const Duration(days: 1))) {
-        final dateTimeString = currentDate.toDateString();
-        _dates.add(dateTimeString);
-      }
-
-      selectedDate =
-          DateTime.fromMillisecondsSinceEpoch(_maxDateTimestamp).toDateString();
-      setState(() {
-        _groupedTimelogs = groupedTimelogs;
-      });
     });
   }
 
@@ -96,6 +101,7 @@ class _TimelogsState extends State<Timelogs>
 
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         title: Text(selectedDate),
         actions: [
           IconButton(
@@ -111,15 +117,17 @@ class _TimelogsState extends State<Timelogs>
                 initialDate: initialDate,
                 firstDate: firstDate,
                 lastDate: lastDate,
-              ).then((value) {
-                setState(
-                  () {
-                    if (value != null) {
-                      selectedDate = value!.toDateString();
-                    }
-                  },
-                );
-              });
+              ).then(
+                (value) {
+                  setState(
+                    () {
+                      if (value != null) {
+                        selectedDate = value.toDateString();
+                      }
+                    },
+                  );
+                },
+              );
             },
             icon: const Icon(
               Icons.calendar_month_rounded,
@@ -127,181 +135,199 @@ class _TimelogsState extends State<Timelogs>
           ),
           const AppBarMenuButton()
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(105),
-          child: SizedBox(
-            height: 105,
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 60,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    reverse: true,
-                    itemCount: _dates.length,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    separatorBuilder: (c, i) => const SizedBox(
-                      width: 10,
-                    ),
-                    itemBuilder: (context, index) {
-                      final [month, date] =
-                          _dates[index].split(',').first.split(' ');
-                      return SizedBox(
-                        width: 35,
-                        child: Material(
-                          color: _dates[index] != selectedDate
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.inversePrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(6),
-                            onTap: () {
-                              setState(() {
-                                selectedDate = _dates[index];
-                              });
-                            },
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    color: Colors.black.withAlpha(20),
-                                    child: Center(
-                                      child: Text(
-                                        month,
-                                        style: TextStyle(
-                                          color: _dates[index] != selectedDate
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onPrimary
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                          fontWeight:
-                                              _dates[index] != selectedDate
-                                                  ? FontWeight.w500
-                                                  : FontWeight.w400,
-                                          fontSize: 13,
+        bottom: hasData
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(105),
+                child: SizedBox(
+                  height: 105,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 60,
+                        child: Listener(
+                          onPointerSignal: (event) {
+                            if (event is PointerScrollEvent) {
+                              final offset = event.scrollDelta.dy;
+                              _dateScrollController.jumpTo(
+                                  _dateScrollController.offset + offset);
+                            }
+                          },
+                          child: ListView.separated(
+                            controller: _dateScrollController,
+                            scrollDirection: Axis.horizontal,
+                            reverse: true,
+                            itemCount: _dates.length,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            separatorBuilder: (c, i) => const SizedBox(
+                              width: 10,
+                            ),
+                            itemBuilder: (context, index) {
+                              final [month, date] =
+                                  _dates[index].split(',').first.split(' ');
+                              return SizedBox(
+                                width: 35,
+                                child: Material(
+                                  color: _dates[index] != selectedDate
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .inversePrimary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(6),
+                                    onTap: () {
+                                      setState(() {
+                                        selectedDate = _dates[index];
+                                      });
+                                    },
+                                    child: Column(
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            color: Colors.black.withAlpha(20),
+                                            child: Center(
+                                              child: Text(
+                                                month,
+                                                style: TextStyle(
+                                                  color: _dates[index] !=
+                                                          selectedDate
+                                                      ? Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimary
+                                                      : Theme.of(context)
+                                                          .colorScheme
+                                                          .primary,
+                                                  fontWeight: _dates[index] !=
+                                                          selectedDate
+                                                      ? FontWeight.w500
+                                                      : FontWeight.w400,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        Expanded(
+                                          child: Center(
+                                            child: Text(
+                                              date,
+                                              style: TextStyle(
+                                                color: _dates[index] !=
+                                                        selectedDate
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .onPrimary
+                                                    : Theme.of(context)
+                                                        .colorScheme
+                                                        .primary,
+                                                fontWeight: _dates[index] !=
+                                                        selectedDate
+                                                    ? FontWeight.w500
+                                                    : FontWeight.w400,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      ],
                                     ),
                                   ),
                                 ),
-                                Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      date,
-                                      style: TextStyle(
-                                        color: _dates[index] != selectedDate
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .onPrimary
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                        fontWeight:
-                                            _dates[index] != selectedDate
-                                                ? FontWeight.w500
-                                                : FontWeight.w400,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
+                              );
+                            },
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Expanded(
+                          child: TagFilter(
+                        initialSelectedTag: null,
+                        onSelectedTagChange: (tag) {
+                          setState(() {
+                            _selectedTag = tag;
+                          });
+                        },
+                      ))
+                    ],
                   ),
                 ),
+              )
+            : null,
+      ),
+      body: hasData
+          ? Column(
+              children: [
                 const SizedBox(
                   height: 10,
                 ),
-                Expanded(
-                    child: TagFilter(
-                  initialSelectedTag: null,
-                  onSelectedTagChange: (tag) {
-                    setState(() {
-                      _selectedTag = tag;
-                    });
-                  },
-                ))
-              ],
-            ),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          const SizedBox(
-            height: 10,
-          ),
-          const Divider(
-            height: 0,
-          ),
-          Expanded(
-            child: Builder(builder: (context) {
-              List<Timelog> items = [];
-              if (_groupedTimelogs.containsKey(selectedDate)) {
-                items = _groupedTimelogs[selectedDate]!.toList();
-
-                if (_selectedTag != null) {
-                  items.removeWhere((element) {
-                    bool result = true;
-                    if (element.task.value != null) {
-                      for (var tag in element.task.value!.tags) {
-                        if (tag.id == _selectedTag) {
-                          result = false;
-                        }
-                      }
-                    }
-                    return result;
-                  });
-                }
-
-                items.sort((a, b) => a.startTime.compareTo(b.startTime));
-              }
-              if (items.isEmpty) {
-                return Center(
-                    child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.hourglass_disabled_rounded,
-                      size: 80,
-                    ),
-                    const SizedBox(
-                      height: 30,
-                    ),
-                    Text('No logs in $selectedDate'),
-                  ],
-                ));
-              }
-              return ListView.separated(
-                itemCount: items.length,
-                separatorBuilder: (c, i) => const Divider(
+                const Divider(
                   height: 0,
                 ),
-                itemBuilder: (context, index) {
-                  Timelog timelog = items[index];
-                  return TimelogEntry(
-                    id: timelog.id,
-                    running: timelog.running,
-                    task: timelog.task.value?.name ?? '',
-                    description: timelog.description,
-                    startTime: timelog.startTime,
-                    endTime: timelog.endTime,
-                    milliseconds: timelog.endTime - timelog.startTime,
-                  );
-                },
-              );
-            }),
-          )
-        ],
-      ),
+                Expanded(
+                  child: Builder(builder: (context) {
+                    List<Timelog> items = [];
+                    if (_groupedTimelogs.containsKey(selectedDate)) {
+                      items = _groupedTimelogs[selectedDate]!.toList();
+
+                      if (_selectedTag != null) {
+                        items.removeWhere((element) {
+                          bool result = true;
+                          if (element.task.value != null) {
+                            for (var tag in element.task.value!.tags) {
+                              if (tag.id == _selectedTag) {
+                                result = false;
+                              }
+                            }
+                          }
+                          return result;
+                        });
+                      }
+
+                      items.sort((a, b) => a.startTime.compareTo(b.startTime));
+                    }
+                    if (items.isEmpty) {
+                      return Center(
+                          child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.hourglass_disabled_rounded,
+                            size: 80,
+                          ),
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          Text('No logs in $selectedDate'),
+                        ],
+                      ));
+                    }
+                    return ListView.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (c, i) => const Divider(
+                        height: 0,
+                      ),
+                      itemBuilder: (context, index) {
+                        Timelog timelog = items[index];
+                        return TimelogEntry(
+                          id: timelog.id,
+                          running: timelog.running,
+                          task: timelog.task.value?.name ?? '',
+                          description: timelog.description,
+                          startTime: timelog.startTime,
+                          endTime: timelog.endTime,
+                          milliseconds: timelog.endTime - timelog.startTime,
+                        );
+                      },
+                    );
+                  }),
+                )
+              ],
+            )
+          : const NoDataEmoji(),
     );
   }
 }

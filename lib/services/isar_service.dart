@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:isar/isar.dart';
 import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/models/task.dart';
@@ -15,14 +17,24 @@ class IsarService {
     final dir = await getApplicationDocumentsDirectory();
 
     if (Isar.instanceNames.isEmpty) {
-      return await Isar.open(
-        [TimelogSchema, TaskSchema, TagSchema],
-        directory: dir.path,
-        name: 'timebrew',
-      );
+      try {
+        return await _openIsar(dir);
+      } catch (err) {
+        File destFile = File('${dir.path}/timebrew.isar');
+        destFile.deleteSync();
+        return await _openIsar(dir);
+      }
     }
 
     return Future.value(Isar.getInstance('timebrew'));
+  }
+
+  Future<Isar> _openIsar(Directory dir) {
+    return Isar.open(
+      [TimelogSchema, TaskSchema, TagSchema],
+      directory: dir.path,
+      name: 'timebrew',
+    );
   }
 
   Future<Timelog?> getTimelogById(Id timelogId) async {
