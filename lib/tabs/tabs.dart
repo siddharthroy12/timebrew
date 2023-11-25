@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:side_sheet/side_sheet.dart';
-import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/popups/create_timelog.dart';
-import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/settings.dart';
 import 'package:timebrew/tabs/stats.dart';
 import 'package:timebrew/tabs/tags.dart';
@@ -31,18 +27,13 @@ class Tabs extends StatefulWidget {
 }
 
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
-  final _isar = IsarService();
   int _tabIndex = 0;
   bool _desktopView = true;
-  bool _hasSpaceForRightPanel = false;
   bool _searchMode = false;
   final TextEditingController _searchInputController = TextEditingController();
   final PageController _pageController = PageController(initialPage: 0);
 
   String _searchString = "";
-  List<Tag> _tags = [];
-  Map<Id, bool> _selectedTags = {};
-  bool _stickyFilterPanelOpen = false;
 
   List<TabEntry> tabs = [
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
@@ -51,25 +42,6 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     TabEntry(title: 'Tags', icon: Icons.local_offer_rounded),
     TabEntry(title: 'Stats', icon: Icons.analytics_rounded),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTags();
-  }
-
-  void _loadTags() {
-    _isar.getTagStream().listen((value) {
-      setState(() {
-        for (var tag in value) {
-          if (!_selectedTags.containsKey(tag.id)) {
-            _selectedTags[tag.id] = true;
-          }
-        }
-        _tags = value;
-      });
-    });
-  }
 
   void _onDestinationChange(int index) {
     setState(() {
@@ -117,38 +89,9 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     }
   }
 
-  void _showFilterSheet() async {
-    setState(() {
-      _stickyFilterPanelOpen = !_stickyFilterPanelOpen;
-    });
-    if (!_hasSpaceForRightPanel) {
-      await SideSheet.right(
-        transitionDuration: const Duration(milliseconds: 200),
-        body: TagFilter(
-          tags: _tags,
-          initialSelectedTags: _selectedTags,
-          onTagSelectionChange: (selectedTags) {
-            setState(() {
-              _selectedTags = selectedTags;
-            });
-          },
-          onClose: () {
-            Navigator.pop(context);
-          },
-        ),
-        width: 250,
-        context: context,
-      );
-      setState(() {
-        _stickyFilterPanelOpen = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     _desktopView = MediaQuery.of(context).size.width > 500;
-    _hasSpaceForRightPanel = MediaQuery.of(context).size.width > 700;
     final settingsButton = IconButton(
       onPressed: () {
         Navigator.of(context).push(
@@ -188,91 +131,19 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             : [],
         Expanded(
           child: Scaffold(
-            appBar: AppBar(
-              leading: _searchMode
-                  ? IconButton(
-                      onPressed: () => _toggleSearchMode(false),
-                      icon: const Icon(
-                        Icons.arrow_back,
-                      ),
-                    )
-                  : null,
-              title: _searchMode
-                  ? TextField(
-                      controller: _searchInputController,
-                      onChanged: (text) {
-                        setState(() {
-                          _searchString = text;
-                        });
-                      },
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        hintText: 'Search...',
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    )
-                  : Text(tabs[_tabIndex].title),
-              actions: [
-                !_searchMode && _tabIndex > 1 && _tabIndex < 4
-                    ? IconButton(
-                        onPressed: () => _toggleSearchMode(true),
-                        icon: Icon(
-                          _searchMode ? Icons.cancel : Icons.search_rounded,
-                        ),
-                      )
-                    : Container(),
-                ..._tabIndex != 3
-                    ? [
-                        _stickyFilterPanelOpen
-                            ? IconButton.filledTonal(
-                                isSelected: _selectedTags.containsValue(false),
-                                onPressed: _showFilterSheet,
-                                selectedIcon: Icon(
-                                  Icons.filter_alt_rounded,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                icon: const Icon(Icons.filter_alt_outlined),
-                              )
-                            : IconButton(
-                                isSelected: _selectedTags.containsValue(false),
-                                onPressed: _showFilterSheet,
-                                selectedIcon: Icon(
-                                  Icons.filter_alt_rounded,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                icon: const Icon(Icons.filter_alt_outlined),
-                              )
-                      ]
-                    : [],
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: settingsButton,
-                )
-              ],
-            ),
             body: PageView(
               physics: const NeverScrollableScrollPhysics(),
               controller: _pageController,
               children: [
-                Timer(
-                  selectedTags: _selectedTags,
-                ),
-                Timelogs(
-                  selectedTags: _selectedTags,
-                ),
+                const Timer(),
+                const Timelogs(),
                 Tasks(
                   searchString: _searchString,
-                  selectedTags: _selectedTags,
                 ),
                 Tags(
                   searchString: _searchString,
                 ),
-                Stats(
-                  selectedTags: Map.of(_selectedTags),
-                ),
+                const Stats(),
               ],
             ),
             bottomNavigationBar: !_desktopView
@@ -307,130 +178,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
             ),
           ),
         ),
-        ..._stickyFilterPanelOpen && _hasSpaceForRightPanel
-            ? [
-                const VerticalDivider(
-                  width: 1,
-                ),
-                SizedBox(
-                  width: 250,
-                  child: TagFilter(
-                    tags: _tags,
-                    initialSelectedTags: _selectedTags,
-                    onTagSelectionChange: (selectedTags) {
-                      setState(() {
-                        _selectedTags = selectedTags;
-                      });
-                    },
-                    onClose: () {
-                      setState(() {
-                        _stickyFilterPanelOpen = false;
-                      });
-                    },
-                  ),
-                )
-              ]
-            : [],
       ],
-    );
-  }
-}
-
-class TagFilter extends StatefulWidget {
-  final List<Tag> tags;
-  final Map<Id, bool> initialSelectedTags;
-  final Function(Map<Id, bool>) onTagSelectionChange;
-  final Function() onClose;
-  const TagFilter({
-    super.key,
-    required this.tags,
-    required this.initialSelectedTags,
-    required this.onTagSelectionChange,
-    required this.onClose,
-  });
-
-  @override
-  State<TagFilter> createState() => _TagFilterState();
-}
-
-class _TagFilterState extends State<TagFilter> {
-  Map<Id, bool> _selectedTags = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedTags = widget.initialSelectedTags;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8.0),
-                    child: Text(
-                      'Filter Tags',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      widget.onClose();
-                    },
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: widget.tags.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return ListTile(
-                      leading: Checkbox(
-                        value: !_selectedTags.containsValue(false),
-                        onChanged: (event) {
-                          if (event != null) {
-                            setState(() {
-                              for (var tag in widget.tags) {
-                                _selectedTags[tag.id] = event;
-                                widget.onTagSelectionChange(_selectedTags);
-                              }
-                            });
-                          }
-                        },
-                      ),
-                      title: const Text('Select all'),
-                    );
-                  }
-                  return ListTile(
-                    leading: Checkbox(
-                      value: _selectedTags[widget.tags[index - 1].id] ?? false,
-                      onChanged: (event) {
-                        if (event != null) {
-                          setState(() {
-                            _selectedTags[widget.tags[index - 1].id] = event;
-                            widget.onTagSelectionChange(_selectedTags);
-                          });
-                        }
-                      },
-                    ),
-                    title: Text(widget.tags[index - 1].name),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

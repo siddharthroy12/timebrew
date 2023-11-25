@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/models/timelog.dart';
@@ -11,9 +10,7 @@ import 'package:timebrew/widgets/no_data_emoji.dart';
 enum GroupBy { daysInMonth, weeksInMonth }
 
 class Stats extends StatefulWidget {
-  final Map<Id, bool> selectedTags;
-
-  const Stats({super.key, required this.selectedTags});
+  const Stats({super.key});
 
   @override
   State<Stats> createState() => _StatsState();
@@ -27,6 +24,7 @@ class _StatsState extends State<Stats> {
   int _innerIndex = 0;
   late Future<List<Timelog>> _timelogsFuture;
   PageController _controller = PageController();
+  final Map<Id, bool> selectedTags = {};
 
   @override
   void initState() {
@@ -43,7 +41,7 @@ class _StatsState extends State<Stats> {
 
   void _loadDaysInWeeks(timelogs) {
     if (mounted) {
-      var (daysInWeeks, _) = getStatsHours(timelogs, widget.selectedTags);
+      var (daysInWeeks, _) = getStatsHours(timelogs, selectedTags);
       setState(() {
         _isLoading = false;
         _daysInWeeks = daysInWeeks;
@@ -61,14 +59,6 @@ class _StatsState extends State<Stats> {
           _innerIndex = finalInnerIndex;
         }
       });
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant Stats oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!mapEquals(oldWidget.selectedTags, widget.selectedTags)) {
-      _isar.getTimelogStream().first.then(_loadDaysInWeeks);
     }
   }
 

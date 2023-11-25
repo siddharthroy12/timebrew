@@ -15,11 +15,9 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 class Tasks extends StatefulWidget {
   final String searchString;
-  final Map<Id, bool> selectedTags;
   const Tasks({
     super.key,
     required this.searchString,
-    required this.selectedTags,
   });
 
   @override
@@ -32,6 +30,7 @@ class _TasksState extends State<Tasks> {
   List<Task>? _tasks = [];
   bool _isLoading = true;
   late StreamSubscription _tasksStreamSubscription;
+  final Map<Id, bool> selectedTags = {};
 
   @override
   void initState() {
@@ -100,7 +99,7 @@ class _TasksState extends State<Tasks> {
     // Filter tag
     filteredList = filteredList
         .where((element) => element.tags
-            .where((element) => widget.selectedTags[element.id] ?? false)
+            .where((element) => selectedTags[element.id] ?? false)
             .isNotEmpty)
         .toList();
 

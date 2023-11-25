@@ -129,9 +129,8 @@ class TagEntry extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => Scaffold(
               appBar: AppBar(title: Text('$name Tasks')),
-              body: Tasks(
+              body: const Tasks(
                 searchString: "",
-                selectedTags: {id: true},
               ),
             ),
           ),

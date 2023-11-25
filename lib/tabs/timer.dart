@@ -10,9 +10,7 @@ import 'package:timebrew/utils.dart';
 enum TimerState { stopped, running, paused }
 
 class Timer extends StatefulWidget {
-  final Map<Id, bool> selectedTags;
-
-  const Timer({super.key, required this.selectedTags});
+  const Timer({super.key});
 
   @override
   State<Timer> createState() => _TimerState();
@@ -327,28 +325,21 @@ class _TimerState extends State<Timer>
                               List<DropdownMenuEntry> dropdownMenuEntries = [];
 
                               for (var task in tasks.data!) {
-                                if (task.tags
-                                    .where((element) =>
-                                        widget.selectedTags[element.id] ??
-                                        false)
-                                    .isNotEmpty) {
-                                  dropdownMenuEntries.add(
-                                    DropdownMenuEntry(
-                                      value: task.id,
-                                      label: task.name,
-                                      style: ButtonStyle(
-                                        padding:
-                                            MaterialStateProperty.resolveWith(
-                                          (states) =>
-                                              const EdgeInsets.symmetric(
-                                            horizontal: 40,
-                                            vertical: 10,
-                                          ),
+                                dropdownMenuEntries.add(
+                                  DropdownMenuEntry(
+                                    value: task.id,
+                                    label: task.name,
+                                    style: ButtonStyle(
+                                      padding:
+                                          MaterialStateProperty.resolveWith(
+                                        (states) => const EdgeInsets.symmetric(
+                                          horizontal: 40,
+                                          vertical: 10,
                                         ),
                                       ),
                                     ),
-                                  );
-                                }
+                                  ),
+                                );
                               }
 
                               if (dropdownMenuEntries.isEmpty) {
