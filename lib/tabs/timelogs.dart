@@ -2,12 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:timebrew/extensions/date_time.dart';
-import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/widgets/app_bar_menu_button.dart';
+import 'package:timebrew/widgets/conditional.dart';
 import 'package:timebrew/widgets/no_data_emoji.dart';
 import 'package:timebrew/utils.dart';
 import 'package:timebrew/widgets/tag_filter.dart';
@@ -29,9 +29,10 @@ class _TimelogsState extends State<Timelogs>
   Id? _selectedTag;
   final _isar = IsarService();
   Map<String, List<Timelog>> _groupedTimelogs = {};
-  ScrollController _dateScrollController = ScrollController();
+  final ScrollController _dateScrollController = ScrollController();
   final List<String> _dates = [];
   String selectedDate = 'Logs';
+  bool _isLoading = true;
   int _minDateTimestamp = 0;
   int _maxDateTimestamp = 0;
 
@@ -42,7 +43,6 @@ class _TimelogsState extends State<Timelogs>
   void initState() {
     super.initState();
     _loadTimelogs();
-    _loadTags();
   }
 
   void _loadTimelogs() {
@@ -87,17 +87,144 @@ class _TimelogsState extends State<Timelogs>
             .toDateString();
         setState(() {
           _groupedTimelogs = groupedTimelogs;
+          _isLoading = false;
         });
       }
     });
   }
 
-  void _loadTags() {}
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
     bool hasData = _groupedTimelogs.isNotEmpty;
+
+    PreferredSize? bottomWidget;
+
+    if (hasData) {
+      bottomWidget = PreferredSize(
+        preferredSize: const Size.fromHeight(114),
+        child: SizedBox(
+          height: 114,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 60,
+                child: Listener(
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      final offset = event.scrollDelta.dy;
+                      _dateScrollController
+                          .jumpTo(_dateScrollController.offset + offset);
+                    }
+                  },
+                  child: ListView.separated(
+                    controller: _dateScrollController,
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    itemCount: _dates.length,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    separatorBuilder: (c, i) => const SizedBox(
+                      width: 10,
+                    ),
+                    itemBuilder: (context, index) {
+                      final [month, date] =
+                          _dates[index].split(',').first.split(' ');
+                      return SizedBox(
+                        width: 35,
+                        child: Material(
+                          color: _dates[index] != selectedDate
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.inversePrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(6),
+                            onTap: () {
+                              setState(() {
+                                selectedDate = _dates[index];
+                              });
+                            },
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    color: Colors.black.withAlpha(20),
+                                    child: Center(
+                                      child: Text(
+                                        month,
+                                        style: TextStyle(
+                                          color: _dates[index] != selectedDate
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .onPrimary
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                          fontWeight:
+                                              _dates[index] != selectedDate
+                                                  ? FontWeight.w500
+                                                  : FontWeight.w400,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      date,
+                                      style: TextStyle(
+                                        color: _dates[index] != selectedDate
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimary
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                        fontWeight:
+                                            _dates[index] != selectedDate
+                                                ? FontWeight.w500
+                                                : FontWeight.w400,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              Expanded(
+                child: TagFilter(
+                  initialSelectedTag: null,
+                  onSelectedTagChange: (tag) {
+                    setState(() {
+                      _selectedTag = tag;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              const Divider(
+                height: 0,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -135,140 +262,20 @@ class _TimelogsState extends State<Timelogs>
           ),
           const AppBarMenuButton()
         ],
-        bottom: hasData
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(105),
-                child: SizedBox(
-                  height: 105,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 60,
-                        child: Listener(
-                          onPointerSignal: (event) {
-                            if (event is PointerScrollEvent) {
-                              final offset = event.scrollDelta.dy;
-                              _dateScrollController.jumpTo(
-                                  _dateScrollController.offset + offset);
-                            }
-                          },
-                          child: ListView.separated(
-                            controller: _dateScrollController,
-                            scrollDirection: Axis.horizontal,
-                            reverse: true,
-                            itemCount: _dates.length,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            separatorBuilder: (c, i) => const SizedBox(
-                              width: 10,
-                            ),
-                            itemBuilder: (context, index) {
-                              final [month, date] =
-                                  _dates[index].split(',').first.split(' ');
-                              return SizedBox(
-                                width: 35,
-                                child: Material(
-                                  color: _dates[index] != selectedDate
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .inversePrimary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(6),
-                                    onTap: () {
-                                      setState(() {
-                                        selectedDate = _dates[index];
-                                      });
-                                    },
-                                    child: Column(
-                                      children: [
-                                        Expanded(
-                                          child: Container(
-                                            color: Colors.black.withAlpha(20),
-                                            child: Center(
-                                              child: Text(
-                                                month,
-                                                style: TextStyle(
-                                                  color: _dates[index] !=
-                                                          selectedDate
-                                                      ? Theme.of(context)
-                                                          .colorScheme
-                                                          .onPrimary
-                                                      : Theme.of(context)
-                                                          .colorScheme
-                                                          .primary,
-                                                  fontWeight: _dates[index] !=
-                                                          selectedDate
-                                                      ? FontWeight.w500
-                                                      : FontWeight.w400,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: Center(
-                                            child: Text(
-                                              date,
-                                              style: TextStyle(
-                                                color: _dates[index] !=
-                                                        selectedDate
-                                                    ? Theme.of(context)
-                                                        .colorScheme
-                                                        .onPrimary
-                                                    : Theme.of(context)
-                                                        .colorScheme
-                                                        .primary,
-                                                fontWeight: _dates[index] !=
-                                                        selectedDate
-                                                    ? FontWeight.w500
-                                                    : FontWeight.w400,
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Expanded(
-                          child: TagFilter(
-                        initialSelectedTag: null,
-                        onSelectedTagChange: (tag) {
-                          setState(() {
-                            _selectedTag = tag;
-                          });
-                        },
-                      ))
-                    ],
-                  ),
-                ),
-              )
-            : null,
+        bottom: bottomWidget,
       ),
-      body: hasData
-          ? Column(
-              children: [
-                const SizedBox(
-                  height: 10,
-                ),
-                const Divider(
-                  height: 0,
-                ),
-                Expanded(
-                  child: Builder(builder: (context) {
+      body: Conditional(
+        condition: _isLoading,
+        ifTrue: const Center(
+          child: CircularProgressIndicator(),
+        ),
+        ifFalse: Conditional(
+          condition: hasData,
+          ifTrue: Column(
+            children: [
+              Expanded(
+                child: Builder(
+                  builder: (context) {
                     List<Timelog> items = [];
                     if (_groupedTimelogs.containsKey(selectedDate)) {
                       items = _groupedTimelogs[selectedDate]!.toList();
@@ -323,11 +330,14 @@ class _TimelogsState extends State<Timelogs>
                         );
                       },
                     );
-                  }),
-                )
-              ],
-            )
-          : const NoDataEmoji(),
+                  },
+                ),
+              )
+            ],
+          ),
+          ifFalse: const NoDataEmoji(),
+        ),
+      ),
     );
   }
 }
@@ -357,7 +367,7 @@ class TimelogEntry extends StatelessWidget {
     return InkWell(
       onTap: () {},
       child: Padding(
-        padding: const EdgeInsets.only(top: 15, bottom: 15, left: 20, right: 0),
+        padding: const EdgeInsets.only(top: 15, bottom: 15, left: 20, right: 5),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -10,119 +10,112 @@ import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/timelogs.dart';
 import 'package:timebrew/utils.dart';
+import 'package:timebrew/widgets/app_bar_menu_button.dart';
+import 'package:timebrew/widgets/conditional.dart';
 import 'package:timebrew/widgets/no_data_emoji.dart';
+import 'package:timebrew/widgets/tag_filter.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-class Tasks extends StatefulWidget {
+class TasksPage extends StatefulWidget {
   final String searchString;
-  const Tasks({
+  const TasksPage({
     super.key,
     required this.searchString,
   });
 
   @override
-  State<Tasks> createState() => _TasksState();
+  State<TasksPage> createState() => _TasksPageState();
 }
 
-class _TasksState extends State<Tasks> {
-  final _isar = IsarService();
-  final Map<Id, int> _millisecondsOnTasks = {};
-  List<Task>? _tasks = [];
-  bool _isLoading = true;
-  late StreamSubscription _tasksStreamSubscription;
-  final Map<Id, bool> selectedTags = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _tasksStreamSubscription = _isar.getTaskStream().listen((tasks) {
-      setState(() {
-        _tasks = tasks;
-        _isLoading = false;
-      });
-    });
-
-    _isar.getTimelogStream().first.then((timelogs) {
-      setState(() {
-        for (var timelog in timelogs) {
-          final milliseconds = timelog.endTime - timelog.startTime;
-
-          if (timelog.task.value != null) {
-            if (_millisecondsOnTasks.containsKey(timelog.task.value!.id)) {
-              _millisecondsOnTasks[timelog.task.value!.id] =
-                  _millisecondsOnTasks[timelog.task.value!.id]! + milliseconds;
-            } else {
-              _millisecondsOnTasks[timelog.task.value!.id] = milliseconds;
-            }
-          }
-        }
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _tasksStreamSubscription.cancel();
-  }
+class _TasksPageState extends State<TasksPage> {
+  String _searchQuery = "";
+  bool _searchMode = false;
+  Id? _selectedTag;
+  final TextEditingController _searchInputController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    if (_tasks == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    // Search Filter
-    var filteredList = _tasks!
-        .where(
-          (element) =>
-              element.name.toLowerCase().contains(
-                    widget.searchString.toLowerCase(),
-                  ) ||
-              element.tags
-                  .where(
-                    (element) => element.name.toLowerCase().contains(
-                          widget.searchString.toLowerCase(),
-                        ),
-                  )
-                  .isNotEmpty,
-        )
-        .toList();
-
-    // Filter tag
-    filteredList = filteredList
-        .where((element) => element.tags
-            .where((element) => selectedTags[element.id] ?? false)
-            .isNotEmpty)
-        .toList();
-
-    if (filteredList.isEmpty) {
-      return const NoDataEmoji();
-    }
-
-    return ListView.separated(
-      itemCount: filteredList.length,
-      separatorBuilder: (context, index) {
-        return Container();
-      },
-      padding: const EdgeInsets.only(bottom: 60),
-      itemBuilder: (BuildContext context, int index) {
-        Task task = filteredList[index];
-        return TaskEntry(
-          name: task.name,
-          id: task.id,
-          milliseconds: _millisecondsOnTasks[task.id] ?? 0,
-          tags: task.tags.toList(),
-          link: task.link,
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        title: Conditional(
+          condition: _searchMode,
+          ifFalse: const Text('Tasks'),
+          ifTrue: Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _searchMode = false;
+                    _searchQuery = "";
+                    _searchInputController.text = "";
+                  });
+                },
+                icon: const Icon(Icons.arrow_back),
+              ),
+              Expanded(
+                child: TextField(
+                  controller: _searchInputController,
+                  onChanged: (text) {
+                    setState(() {
+                      _searchQuery = text;
+                    });
+                  },
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Search...',
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
+        actions: [
+          Conditional(
+            condition: _searchMode,
+            ifFalse: IconButton(
+              onPressed: () {
+                setState(() {
+                  _searchMode = true;
+                });
+              },
+              icon: const Icon(Icons.search_rounded),
+            ),
+          ),
+          const AppBarMenuButton(),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(55),
+          child: SizedBox(
+            height: 55,
+            child: Column(
+              children: [
+                Expanded(
+                  child: TagFilter(
+                    initialSelectedTag: _selectedTag,
+                    onSelectedTagChange: (tag) {
+                      setState(() {
+                        _selectedTag = tag;
+                      });
+                    },
+                  ),
+                ),
+                const Divider(
+                  height: 0,
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+      body: TaskList(
+        searchQuery: _searchQuery,
+        selectedTag: _selectedTag,
+      ),
     );
   }
 }
@@ -166,45 +159,65 @@ class TaskEntry extends StatelessWidget {
       ],
     );
 
-    Widget? subtitle = tags.isNotEmpty
-        ? Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: tags
-                  .map(
-                    (tag) => ActionChip(
-                      onPressed: () {},
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(50),
-                        ),
-                      ),
-                      color: MaterialStateProperty.resolveWith((states) {
-                        return HexColor.fromHex(tag.color).withOpacity(0.2);
-                      }),
-                      side: BorderSide(
-                        width: 1,
-                        color: HexColor.fromHex(tag.color),
-                      ),
-                      label: Text(
-                        tag.name,
-                      ),
+    Widget? subtitle;
+    if (tags.isNotEmpty) {
+      subtitle = Padding(
+        padding: const EdgeInsets.only(top: 8.0),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: tags
+              .map(
+                (tag) => ActionChip(
+                  onPressed: () {},
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(4),
                     ),
-                  )
-                  .toList(),
-            ),
-          )
-        : null;
+                  ),
+                  color: MaterialStateProperty.resolveWith((states) {
+                    return HexColor.fromHex(tag.color);
+                  }),
+                  side: const BorderSide(
+                    width: 0,
+                    color: Colors.transparent,
+                  ),
+                  label: Text(
+                    tag.name,
+                    style: TextStyle(
+                      color:
+                          HexColor.fromHex(tag.color).computeLuminance() >= 0.5
+                              ? Colors.white
+                              : Colors.black,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      );
+    } else {
+      subtitle = null;
+    }
 
     EdgeInsets padding =
-        const EdgeInsets.symmetric(vertical: 10, horizontal: 20);
+        const EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 10);
+
+    Widget icon = const Padding(
+      padding: EdgeInsets.only(right: 5),
+      child: Icon(
+        Icons.task_alt,
+        size: 30,
+      ),
+    );
 
     if (showExpansion) {
       return ExpansionTile(
         title: title,
         subtitle: subtitle,
+        leading: icon,
         tilePadding: padding,
         children: timelogs
             .map(
@@ -225,17 +238,15 @@ class TaskEntry extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: Text('$name Timelogs')),
-              body: Timelogs(
-                selectedTask: id,
-              ),
+            builder: (context) => Timelogs(
+              selectedTask: id,
             ),
           ),
         );
       },
       contentPadding: padding,
       subtitle: subtitle,
+      leading: icon,
       trailing: PopupMenuButton(
         itemBuilder: (BuildContext context) => <PopupMenuEntry>[
           PopupMenuItem(
@@ -288,6 +299,120 @@ class TaskEntry extends StatelessWidget {
         ],
       ),
       title: title,
+    );
+  }
+}
+
+class TaskList extends StatefulWidget {
+  final Id? selectedTag;
+  final String searchQuery;
+  const TaskList({
+    super.key,
+    required this.selectedTag,
+    required this.searchQuery,
+  });
+
+  @override
+  State<TaskList> createState() => _TaskListState();
+}
+
+class _TaskListState extends State<TaskList> {
+  final _isar = IsarService();
+  final Map<Id, int> _millisecondsOnTasks = {};
+  List<Task>? _tasks = [];
+  late StreamSubscription _tasksStreamSubscription;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tasksStreamSubscription = _isar.getTaskStream().listen((tasks) {
+      setState(() {
+        _tasks = tasks;
+        _isLoading = false;
+      });
+    });
+
+    _isar.getTimelogStream().first.then((timelogs) {
+      setState(() {
+        for (var timelog in timelogs) {
+          final milliseconds = timelog.endTime - timelog.startTime;
+
+          if (timelog.task.value != null) {
+            if (_millisecondsOnTasks.containsKey(timelog.task.value!.id)) {
+              _millisecondsOnTasks[timelog.task.value!.id] =
+                  _millisecondsOnTasks[timelog.task.value!.id]! + milliseconds;
+            } else {
+              _millisecondsOnTasks[timelog.task.value!.id] = milliseconds;
+            }
+          }
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _tasksStreamSubscription.cancel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Search Filter
+    var filteredList = _tasks!
+        .where(
+          (element) =>
+              element.name.toLowerCase().contains(
+                    widget.searchQuery.toLowerCase(),
+                  ) ||
+              element.tags
+                  .where(
+                    (element) => element.name.toLowerCase().contains(
+                          widget.searchQuery.toLowerCase(),
+                        ),
+                  )
+                  .isNotEmpty,
+        )
+        .toList();
+
+    if (widget.selectedTag != null) {
+      // Filter tag
+      filteredList = filteredList
+          .where((element) => element.tags
+              .where((element) => element.id == widget.selectedTag)
+              .isNotEmpty)
+          .toList();
+    }
+
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (filteredList.isEmpty) {
+      return const NoDataEmoji();
+    }
+
+    return ListView.separated(
+      itemCount: filteredList.length,
+      separatorBuilder: (context, index) {
+        return const Divider(
+          height: 0,
+        );
+      },
+      padding: const EdgeInsets.only(bottom: 60),
+      itemBuilder: (BuildContext context, int index) {
+        Task task = filteredList[index];
+        return TaskEntry(
+          name: task.name,
+          id: task.id,
+          milliseconds: _millisecondsOnTasks[task.id] ?? 0,
+          tags: task.tags.toList(),
+          link: task.link,
+        );
+      },
     );
   }
 }

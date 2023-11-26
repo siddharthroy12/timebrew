@@ -129,7 +129,7 @@ class TagEntry extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => Scaffold(
               appBar: AppBar(title: Text('$name Tasks')),
-              body: const Tasks(
+              body: const TasksPage(
                 searchString: "",
               ),
             ),

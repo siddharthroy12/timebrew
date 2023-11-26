@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:timebrew/popups/create_timelog.dart';
-import 'package:timebrew/settings.dart';
 import 'package:timebrew/tabs/stats.dart';
 import 'package:timebrew/tabs/tags.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/tabs/timelogs.dart';
+import 'package:timebrew/widgets/conditional.dart';
 import 'timer.dart';
 import '../popups/create_tag.dart';
 import '../popups/create_task.dart';
@@ -29,16 +29,12 @@ class Tabs extends StatefulWidget {
 class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   int _tabIndex = 0;
   bool _desktopView = true;
-  bool _searchMode = false;
-  final TextEditingController _searchInputController = TextEditingController();
   final PageController _pageController = PageController(initialPage: 0);
-
-  String _searchString = "";
 
   List<TabEntry> tabs = [
     TabEntry(title: 'Timer', icon: Icons.hourglass_bottom_rounded),
     TabEntry(title: 'Logs', icon: Icons.history_rounded),
-    TabEntry(title: 'Tasks', icon: Icons.checklist_rounded),
+    TabEntry(title: 'Tasks', icon: Icons.task_alt),
     TabEntry(title: 'Tags', icon: Icons.local_offer_rounded),
     TabEntry(title: 'Stats', icon: Icons.analytics_rounded),
   ];
@@ -47,15 +43,6 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
     setState(() {
       _pageController.jumpToPage(index);
       _tabIndex = index;
-    });
-    _toggleSearchMode(false);
-  }
-
-  void _toggleSearchMode(bool searchMode) {
-    setState(() {
-      _searchString = "";
-      _searchInputController.text = "";
-      _searchMode = searchMode;
     });
   }
 
@@ -92,74 +79,66 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     _desktopView = MediaQuery.of(context).size.width > 500;
-    final settingsButton = IconButton(
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const Settings(),
-          ),
-        );
-      },
-      icon: const Icon(Icons.settings_outlined),
-    );
+    NavigationBar? bottomNavigationBar;
+
+    if (!_desktopView) {
+      bottomNavigationBar = NavigationBar(
+        onDestinationSelected: _onDestinationChange,
+        selectedIndex: _tabIndex,
+        destinations: tabs
+            .map(
+              (e) => NavigationDestination(
+                icon: Icon(e.icon),
+                label: e.title,
+              ),
+            )
+            .toList(),
+      );
+    }
     return Row(
       children: [
-        ..._desktopView
-            ? [
-                Card(
-                  margin: EdgeInsets.zero,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.zero),
-                  ),
-                  child: NavigationRail(
-                    selectedIndex: _tabIndex,
-                    groupAlignment: 0,
-                    backgroundColor: Colors.transparent,
-                    onDestinationSelected: _onDestinationChange,
-                    labelType: NavigationRailLabelType.all,
-                    destinations: tabs
-                        .map(
-                          (e) => NavigationRailDestination(
-                            icon: Icon(e.icon),
-                            label: Text(e.title),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-              ]
-            : [],
+        Conditional(
+          condition: _desktopView,
+          ifTrue: Card(
+            margin: EdgeInsets.zero,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.zero),
+            ),
+            child: NavigationRail(
+              selectedIndex: _tabIndex,
+              groupAlignment: 0,
+              backgroundColor: Colors.transparent,
+              onDestinationSelected: _onDestinationChange,
+              labelType: NavigationRailLabelType.all,
+              destinations: tabs
+                  .map(
+                    (e) => NavigationRailDestination(
+                      icon: Icon(e.icon),
+                      label: Text(e.title),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ),
         Expanded(
           child: Scaffold(
             body: PageView(
               physics: const NeverScrollableScrollPhysics(),
               controller: _pageController,
-              children: [
-                const Timer(),
-                const Timelogs(),
-                Tasks(
-                  searchString: _searchString,
+              children: const [
+                Timer(),
+                Timelogs(),
+                TasksPage(
+                  searchString: '',
                 ),
                 Tags(
-                  searchString: _searchString,
+                  searchString: '',
                 ),
-                const Stats(),
+                Stats(),
               ],
             ),
-            bottomNavigationBar: !_desktopView
-                ? NavigationBar(
-                    onDestinationSelected: _onDestinationChange,
-                    selectedIndex: _tabIndex,
-                    destinations: tabs
-                        .map(
-                          (e) => NavigationDestination(
-                            icon: Icon(e.icon),
-                            label: e.title,
-                          ),
-                        )
-                        .toList(),
-                  )
-                : null,
+            bottomNavigationBar: bottomNavigationBar,
             floatingActionButton: Builder(
               builder: (context) {
                 if (_tabIndex < 4) {
