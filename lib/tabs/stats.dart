@@ -5,7 +5,9 @@ import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:timebrew/widgets/app_bar_menu_button.dart';
 import 'package:timebrew/widgets/no_data_emoji.dart';
+import 'package:timebrew/widgets/tag_filter.dart';
 
 enum GroupBy { daysInMonth, weeksInMonth }
 
@@ -24,7 +26,7 @@ class _StatsState extends State<Stats> {
   int _innerIndex = 0;
   late Future<List<Timelog>> _timelogsFuture;
   PageController _controller = PageController();
-  final Map<Id, bool> selectedTags = {};
+  Id? _selectedTag;
 
   @override
   void initState() {
@@ -41,21 +43,36 @@ class _StatsState extends State<Stats> {
 
   void _loadDaysInWeeks(timelogs) {
     if (mounted) {
-      var (daysInWeeks, _) = getStatsHours(timelogs, selectedTags);
+      var (daysInWeeks, _) = getStatsHours(timelogs);
       setState(() {
         _isLoading = false;
         _daysInWeeks = daysInWeeks;
         if (daysInWeeks.isNotEmpty) {
           int finalInnerIndex = 0;
+          int finalOuterIndex = 0;
 
-          _outerIndex = daysInWeeks.length - 1;
-          _controller = PageController(initialPage: _outerIndex);
-
-          for (var i = 0; i < daysInWeeks[_outerIndex].length; i++) {
-            if (daysInWeeks[_outerIndex][i].totalHours != 0) {
-              finalInnerIndex = i;
+          for (var outerIndex = daysInWeeks.length - 1;
+              outerIndex >= 0;
+              outerIndex--) {
+            bool found = false;
+            for (var innerIndex = daysInWeeks[outerIndex].length - 1;
+                innerIndex >= 0;
+                innerIndex--) {
+              if (daysInWeeks[outerIndex][innerIndex].totalHours != 0) {
+                finalInnerIndex = innerIndex;
+                finalOuterIndex = outerIndex;
+                found = true;
+                break;
+              }
+            }
+            if (found) {
+              break;
             }
           }
+
+          _outerIndex = finalOuterIndex;
+          _controller = PageController(initialPage: _outerIndex);
+
           _innerIndex = finalInnerIndex;
         }
       });
@@ -159,121 +176,154 @@ class _StatsState extends State<Stats> {
       return const NoDataEmoji();
     }
 
-    return ListView(
-      children: [
-        SizedBox(
-          height: 300,
-          child: Stack(
-            children: [
-              chart ?? Container(),
-              Center(
-                child: Text(
-                  timeSpent,
-                  style: const TextStyle(
-                    fontSize: 18,
+    return Scaffold(
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        title: const Text('Stats'),
+        actions: const [
+          AppBarMenuButton(),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(55),
+          child: SizedBox(
+            height: 55,
+            child: Column(
+              children: [
+                Expanded(
+                  child: TagFilter(
+                    initialSelectedTag: _selectedTag,
+                    onSelectedTagChange: (tag) {
+                      setState(() {
+                        _selectedTag = tag;
+                      });
+                    },
                   ),
                 ),
-              )
+                const Divider(
+                  height: 0,
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+      body: ListView(
+        children: [
+          SizedBox(
+            height: 300,
+            child: Stack(
+              children: [
+                chart ?? Container(),
+                Center(
+                  child: Text(
+                    timeSpent,
+                    style: const TextStyle(
+                      fontSize: 18,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: _selectPreviousMoment,
+                icon: const Icon(Icons.arrow_left),
+              ),
+              Text(
+                moment,
+                style: const TextStyle(fontSize: 18),
+              ),
+              IconButton(
+                onPressed: _selectNextMoment,
+                icon: const Icon(Icons.arrow_right),
+              ),
             ],
           ),
-        ),
-        const SizedBox(
-          height: 20,
-        ),
-        const SizedBox(
-          height: 20,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            IconButton(
-              onPressed: _selectPreviousMoment,
-              icon: const Icon(Icons.arrow_left),
-            ),
-            Text(
-              moment,
-              style: const TextStyle(fontSize: 18),
-            ),
-            IconButton(
-              onPressed: _selectNextMoment,
-              icon: const Icon(Icons.arrow_right),
-            ),
-          ],
-        ),
-        const SizedBox(
-          height: 20,
-        ),
-        SizedBox(
-          height: 150, // Card height
-          child: PageView.builder(
-            itemCount: _daysInWeeks.length,
-            controller: _controller,
-            onPageChanged: (newOuterIndex) {
-              setState(() {
-                _outerIndex = newOuterIndex;
-                if (_innerIndex == 0) {
-                  int finalInnerIndex = 0;
-                  for (var i = finalInnerIndex;
-                      i < _daysInWeeks[_outerIndex].length;
-                      i++) {
-                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-                      finalInnerIndex = i;
-                      break;
-                    }
-                  }
-                  _innerIndex = finalInnerIndex;
-                } else if (_outerIndex < _daysInWeeks[_outerIndex].length - 1) {
-                  int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
-                  for (var i = finalInnerIndex; i > 0; i--) {
-                    if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
-                      finalInnerIndex = i;
-                      break;
-                    }
-                  }
-                  _innerIndex = finalInnerIndex;
-                }
-              });
-            },
-            itemBuilder: (context, index) {
-              return ListenableBuilder(
-                listenable: _controller,
-                builder: (context, child) {
-                  List<MomentHours> moments = _daysInWeeks[index];
-
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: BarChart(
-                      moments: moments,
-                      selectedMoment: _outerIndex == index ? _innerIndex : -1,
-                      onSelectedMomentChange: (moment) {
-                        setState(() {
-                          _innerIndex = moment;
-                        });
-                      },
-                    ),
-                  );
-                },
-              );
-            },
+          const SizedBox(
+            height: 20,
           ),
-        ),
-        const SizedBox(
-          height: 20,
-        ),
-        Builder(
-          builder: (context) {
-            if (_daysInWeeks.isNotEmpty &&
-                _daysInWeeks[_outerIndex].isNotEmpty) {
-              return MomentTasks(
-                momentHours: _daysInWeeks[_outerIndex][_innerIndex],
-              );
-            } else {
-              return Container();
-            }
-          },
-        )
-      ],
+          SizedBox(
+            height: 150, // Card height
+            child: PageView.builder(
+              itemCount: _daysInWeeks.length,
+              controller: _controller,
+              onPageChanged: (newOuterIndex) {
+                setState(() {
+                  _outerIndex = newOuterIndex;
+                  if (_innerIndex == 0) {
+                    int finalInnerIndex = 0;
+                    for (var i = finalInnerIndex;
+                        i < _daysInWeeks[_outerIndex].length;
+                        i++) {
+                      if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+                        finalInnerIndex = i;
+                        break;
+                      }
+                    }
+                    _innerIndex = finalInnerIndex;
+                  } else if (_outerIndex <
+                      _daysInWeeks[_outerIndex].length - 1) {
+                    int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
+                    for (var i = finalInnerIndex; i > 0; i--) {
+                      if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+                        finalInnerIndex = i;
+                        break;
+                      }
+                    }
+                    _innerIndex = finalInnerIndex;
+                  }
+                });
+              },
+              itemBuilder: (context, index) {
+                return ListenableBuilder(
+                  listenable: _controller,
+                  builder: (context, child) {
+                    List<MomentHours> moments = _daysInWeeks[index];
+
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: BarChart(
+                        moments: moments,
+                        selectedMoment: _outerIndex == index ? _innerIndex : -1,
+                        onSelectedMomentChange: (moment) {
+                          setState(() {
+                            _innerIndex = moment;
+                          });
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          const SizedBox(
+            height: 20,
+          ),
+          Builder(
+            builder: (context) {
+              if (_daysInWeeks.isNotEmpty &&
+                  _daysInWeeks[_outerIndex].isNotEmpty) {
+                return MomentTasks(
+                  momentHours: _daysInWeeks[_outerIndex][_innerIndex],
+                );
+              } else {
+                return Container();
+              }
+            },
+          )
+        ],
+      ),
     );
   }
 }
@@ -437,6 +487,7 @@ class _BarChartState extends State<BarChart> {
     if (maxHours < 5) {
       maxHours = 5;
     }
+
     return Stack(
       children: [
         Transform.translate(
@@ -469,83 +520,89 @@ class _BarChartState extends State<BarChart> {
         Padding(
           padding: const EdgeInsets.only(left: 10.0, right: 35),
           child: Row(
-            children: widget.moments
-                .asMap()
-                .entries
-                .map(
-                  (entry) => Expanded(
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Stack(
-                              alignment: AlignmentDirectional.bottomStart,
-                              clipBehavior: Clip.none,
-                              children: [
-                                const SizedBox(
-                                  width: double.infinity,
-                                  height: double.infinity,
+            children: widget.moments.asMap().entries.map(
+              (entry) {
+                var fractionHeight = (entry.value.totalHours / maxHours);
+
+                if (entry.value.totalHours > 0 && fractionHeight < 0.02) {
+                  fractionHeight = 0.02;
+                }
+
+                var timeText = millisecondsToReadable(
+                    (entry.value.totalHours * Duration.millisecondsPerHour)
+                        .toInt(),
+                    compact: true);
+
+                return Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Stack(
+                            alignment: AlignmentDirectional.bottomStart,
+                            clipBehavior: Clip.none,
+                            children: [
+                              const SizedBox(
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                              FractionallySizedBox(
+                                heightFactor: fractionHeight,
+                                widthFactor: 1,
+                                child: Container(
+                                  transform: Matrix4.translationValues(
+                                    0.0,
+                                    -22.0,
+                                    0.0,
+                                  ),
+                                  child: Text(
+                                    timeText,
+                                    style: const TextStyle(fontSize: 9),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.visible,
+                                  ),
                                 ),
-                                FractionallySizedBox(
-                                  heightFactor:
-                                      (entry.value.totalHours / maxHours),
-                                  widthFactor: 1,
+                              ),
+                              FractionallySizedBox(
+                                heightFactor: fractionHeight,
+                                child: InkWell(
+                                  onTap: () {
+                                    widget.onSelectedMomentChange(entry.key);
+                                  },
                                   child: Container(
-                                    transform: Matrix4.translationValues(
-                                      0.0,
-                                      -22.0,
-                                      0.0,
-                                    ),
-                                    child: Text(
-                                      '${entry.value.totalHours.toStringAsFixed(1)}h',
-                                      style: const TextStyle(fontSize: 9),
-                                      textAlign: TextAlign.center,
-                                      overflow: TextOverflow.visible,
-                                    ),
-                                  ),
-                                ),
-                                FractionallySizedBox(
-                                  heightFactor:
-                                      entry.value.totalHours / maxHours,
-                                  child: InkWell(
-                                    onTap: () {
-                                      widget.onSelectedMomentChange(entry.key);
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(4),
-                                          topRight: Radius.circular(4),
-                                        ),
-                                        color:
-                                            widget.selectedMoment == entry.key
-                                                ? Theme.of(context)
-                                                    .colorScheme
-                                                    .inversePrimary
-                                                : Theme.of(context)
-                                                    .colorScheme
-                                                    .secondary,
+                                    decoration: BoxDecoration(
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(4),
+                                        topRight: Radius.circular(4),
                                       ),
+                                      color: widget.selectedMoment == entry.key
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .inversePrimary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .secondary,
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(
-                          height: 5,
-                        ),
-                        Text(
-                          entry.value.moment.split(',')[0],
-                          style: const TextStyle(fontSize: 9),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      Text(
+                        entry.value.moment.split(',')[0],
+                        style: const TextStyle(fontSize: 9),
+                      ),
+                    ],
                   ),
-                )
-                .toList(),
+                );
+              },
+            ).toList(),
           ),
         ),
       ],

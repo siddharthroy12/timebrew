@@ -132,9 +132,7 @@ class _TabsState extends State<Tabs> with SingleTickerProviderStateMixin {
                 TasksPage(
                   searchString: '',
                 ),
-                Tags(
-                  searchString: '',
-                ),
+                Tags(),
                 Stats(),
               ],
             ),

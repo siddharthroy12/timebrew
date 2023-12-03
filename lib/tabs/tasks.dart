@@ -38,6 +38,7 @@ class _TasksPageState extends State<TasksPage> {
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
+        titleSpacing: _searchMode ? 5 : null,
         title: Conditional(
           condition: _searchMode,
           ifFalse: const Text('Tasks'),

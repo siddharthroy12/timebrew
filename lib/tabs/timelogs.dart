@@ -30,7 +30,7 @@ class _TimelogsState extends State<Timelogs>
   final _isar = IsarService();
   Map<String, List<Timelog>> _groupedTimelogs = {};
   final ScrollController _dateScrollController = ScrollController();
-  final List<String> _dates = [];
+  List<String> _dates = [];
   String selectedDate = 'Logs';
   bool _isLoading = true;
   int _minDateTimestamp = 0;
@@ -49,6 +49,8 @@ class _TimelogsState extends State<Timelogs>
     _isar.getTimelogStream().listen((timelogs) {
       if (timelogs.isNotEmpty) {
         final Map<String, List<Timelog>> groupedTimelogs = {};
+        final List<String> dates = [];
+
         // Group timelogs and Calculate minimum and maximum date
         if (timelogs.isNotEmpty) {
           _minDateTimestamp = timelogs.first.endTime;
@@ -80,13 +82,14 @@ class _TimelogsState extends State<Timelogs>
             currentDate.millisecondsSinceEpoch >= _minDateTimestamp;
             currentDate = currentDate.subtract(const Duration(days: 1))) {
           final dateTimeString = currentDate.toDateString();
-          _dates.add(dateTimeString);
+          dates.add(dateTimeString);
         }
 
         selectedDate = DateTime.fromMillisecondsSinceEpoch(_maxDateTimestamp)
             .toDateString();
         setState(() {
           _groupedTimelogs = groupedTimelogs;
+          _dates = dates;
           _isLoading = false;
         });
       }
@@ -288,6 +291,18 @@ class _TimelogsState extends State<Timelogs>
                               if (tag.id == _selectedTag) {
                                 result = false;
                               }
+                            }
+                          }
+                          return result;
+                        });
+                      }
+
+                      if (widget.selectedTask != null) {
+                        items.removeWhere((element) {
+                          bool result = true;
+                          if (element.task.value != null) {
+                            if (element.task.value!.id == widget.selectedTask) {
+                              result = false;
                             }
                           }
                           return result;

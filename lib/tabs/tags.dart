@@ -9,14 +9,13 @@ import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/popups/create_tag.dart';
 import 'package:timebrew/tabs/tasks.dart';
 import 'package:timebrew/utils.dart';
+import 'package:timebrew/widgets/app_bar_menu_button.dart';
+import 'package:timebrew/widgets/conditional.dart';
 import 'package:timebrew/widgets/no_data_emoji.dart';
 
 class Tags extends StatefulWidget {
-  final String searchString;
-
   const Tags({
     super.key,
-    required this.searchString,
   });
 
   @override
@@ -29,6 +28,9 @@ class _TagsState extends State<Tags> {
   List<Tag>? _tags = [];
   bool _isLoading = true;
   late StreamSubscription _tagStreamSubscription;
+  String _searchQuery = "";
+  bool _searchMode = false;
+  final TextEditingController _searchInputController = TextEditingController();
 
   @override
   void initState() {
@@ -67,42 +69,103 @@ class _TagsState extends State<Tags> {
 
   @override
   Widget build(BuildContext context) {
-    if (_tags == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
     final filteredList = _tags!
         .where(
           (element) => element.name.toLowerCase().contains(
-                widget.searchString.toLowerCase(),
+                _searchQuery.toLowerCase(),
               ),
         )
         .toList();
 
-    if (filteredList.isEmpty) {
-      return const NoDataEmoji();
-    }
-    return ListView.separated(
-      itemCount: filteredList.length,
-      separatorBuilder: (context, index) {
-        return Container();
-      },
-      padding: const EdgeInsets.only(bottom: 60),
-      itemBuilder: (BuildContext context, int index) {
-        Tag tag = filteredList[index];
-        return TagEntry(
-          name: tag.name,
-          id: tag.id,
-          milliseconds: _millisecondsOnTags[tag.id] ?? 0,
-          color: HexColor.fromHex(tag.color),
+    return Scaffold(
+      appBar: AppBar(
+          scrolledUnderElevation: 0,
+          titleSpacing: _searchMode ? 5 : null,
+          title: Conditional(
+            condition: _searchMode,
+            ifFalse: const Text('Tags'),
+            ifTrue: Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _searchMode = false;
+                      _searchQuery = "";
+                      _searchInputController.text = "";
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: _searchInputController,
+                    onChanged: (text) {
+                      setState(() {
+                        _searchQuery = text;
+                      });
+                    },
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: 'Search...',
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+          actions: [
+            Conditional(
+              condition: _searchMode,
+              ifFalse: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _searchMode = true;
+                  });
+                },
+                icon: const Icon(Icons.search_rounded),
+              ),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.grid_view_rounded),
+            ),
+            const AppBarMenuButton(),
+          ]),
+      body: Builder(builder: (context) {
+        if (_tags == null) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        if (_isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        if (filteredList.isEmpty) {
+          return const NoDataEmoji();
+        }
+        return ListView.separated(
+          itemCount: filteredList.length,
+          separatorBuilder: (context, index) {
+            return Container();
+          },
+          padding: const EdgeInsets.only(bottom: 60),
+          itemBuilder: (BuildContext context, int index) {
+            Tag tag = filteredList[index];
+            return TagEntry(
+              name: tag.name,
+              id: tag.id,
+              milliseconds: _millisecondsOnTags[tag.id] ?? 0,
+              color: HexColor.fromHex(tag.color),
+            );
+          },
         );
-      },
+      }),
     );
   }
 }
@@ -123,6 +186,9 @@ class TagEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    EdgeInsets padding =
+        const EdgeInsets.only(top: 10, bottom: 10, left: 15, right: 10);
+
     return ListTile(
       onTap: () {
         Navigator.of(context).push(
@@ -136,25 +202,19 @@ class TagEntry extends StatelessWidget {
           ),
         );
       },
-      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      contentPadding: padding,
       leading: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(50),
           color: color,
         ),
         child: SizedBox(
-          width: 40,
-          height: 40,
+          width: 45,
+          height: 45,
           child: Center(
-            child: Text(
-              "#",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color.computeLuminance() >= 0.5
-                    ? Colors.black
-                    : Colors.white,
-              ),
+            child: Icon(
+              Icons.local_offer_rounded,
+              color: Colors.black.withOpacity(0.8),
             ),
           ),
         ),

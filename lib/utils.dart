@@ -28,7 +28,7 @@ class MomentHours {
 /// Convert milliseconds to human readable format
 /// [milliseconds] is epoc time
 /// and this returns a string like `2 hours 34 minutes`
-String millisecondsToReadable(int milliseconds) {
+String millisecondsToReadable(int milliseconds, {bool compact = false}) {
   const millisecondsInSecond = 1000;
   const secondsInMinute = 60;
   const minutesInHour = 60;
@@ -47,21 +47,25 @@ String millisecondsToReadable(int milliseconds) {
   var result = "";
 
   if (days > 0) {
-    result += "$days day ";
+    result += "$days ${compact ? 'd' : 'day'} ";
   }
   if (hours > 0) {
-    result += "$hours hr ";
+    result += "$hours ${compact ? 'h' : 'hr'} ";
   }
   if (minutes > 0) {
-    result += "$minutes min ";
+    result += "$minutes ${compact ? 'm' : 'min'} ";
   }
   if (seconds > 0 && minutes == 0) {
-    result += "$seconds sec";
+    result += "$seconds ${compact ? 's' : 'sec'}";
   }
 
   final trim = result.trim();
 
-  return trim.isNotEmpty ? trim : "No time spent";
+  return trim.isNotEmpty
+      ? trim
+      : compact
+          ? 'N/A'
+          : "No time spent";
 }
 
 /// Convert millisecond epoc time to 12-hour string like "4:45 PM"
@@ -123,7 +127,7 @@ int hoursToMilliseconds(double hours) {
 (
   List<List<MomentHours>>,
   List<List<MomentHours>>,
-) getStatsHours(List<Timelog> timelogs, Map<Id, bool> selectedTags) {
+) getStatsHours(List<Timelog> timelogs) {
   List<List<MomentHours>> daysInWeeks = [];
   List<List<MomentHours>> monthsInQuaters = [];
   Map<String, MomentHours> groupByDay = {};
@@ -139,15 +143,6 @@ int hoursToMilliseconds(double hours) {
   }
 
   for (var timelog in timelogs) {
-    // Filter out tags
-    if (timelog.task.value != null) {
-      if (timelog.task.value!.tags
-          .where((element) => selectedTags[element.id] ?? false)
-          .isEmpty) {
-        continue;
-      }
-    }
-
     final dateTimeString =
         DateTime.fromMillisecondsSinceEpoch(timelog.endTime).toDateString();
     final dayKey = dateTimeString;
@@ -218,6 +213,10 @@ int hoursToMilliseconds(double hours) {
           .add(timelog);
     }
   }
+
+  // Increase end time and decrease start time
+  oldestTimelogTimestamp -= Duration.millisecondsPerDay;
+  latestTimelogTimestamp += Duration.millisecondsPerDay;
 
   // Get the start and end date to loop between
   DateTime startDate =
