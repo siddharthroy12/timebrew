@@ -14,12 +14,10 @@ class Pair<E, F> {
 
 class MomentHours {
   String moment;
-  double totalHours;
   Map<Id, double> taskHours;
   Map<Id, List<Timelog>> taskTimelogs;
   MomentHours({
     required this.moment,
-    required this.totalHours,
     required this.taskHours,
     required this.taskTimelogs,
   });
@@ -163,12 +161,10 @@ int hoursToMilliseconds(double hours) {
     if (!groupByDay.containsKey(dayKey)) {
       groupByDay[dayKey] = MomentHours(
         moment: dayKey,
-        totalHours: 0,
         taskHours: {},
         taskTimelogs: {},
       );
     }
-    groupByDay[dayKey]!.totalHours += hours;
     if (timelog.task.value != null) {
       if (!groupByDay[dayKey]!.taskHours.containsKey(timelog.task.value!.id)) {
         groupByDay[dayKey]!.taskHours[timelog.task.value!.id] = 0;
@@ -188,12 +184,10 @@ int hoursToMilliseconds(double hours) {
     if (!groupByMonth.containsKey(monthKey)) {
       groupByMonth[monthKey] = MomentHours(
         moment: monthKey,
-        totalHours: 0,
         taskHours: {},
         taskTimelogs: {},
       );
     }
-    groupByMonth[monthKey]!.totalHours += hours;
     if (timelog.task.value != null) {
       if (!groupByMonth[monthKey]!
           .taskHours
@@ -244,7 +238,6 @@ int hoursToMilliseconds(double hours) {
     } else {
       week.add(MomentHours(
         moment: dateTimeString,
-        totalHours: 0,
         taskHours: {},
         taskTimelogs: {},
       ));

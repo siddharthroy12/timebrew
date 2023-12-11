@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
+import 'package:timebrew/models/task.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/tasks.dart';
@@ -25,27 +26,54 @@ class _StatsState extends State<Stats> {
   int _outerIndex = 0;
   int _innerIndex = 0;
   late Future<List<Timelog>> _timelogsFuture;
+  late Future<List<Task>> _tasksFuture;
+  Map<Id, Task> _tasks = {};
   PageController _controller = PageController();
   Id? _selectedTag;
 
   @override
   void initState() {
     super.initState();
-    _timelogsFuture = _isar.getTimelogStream().first;
-    _timelogsFuture.then(_loadDaysInWeeks);
+    _onLoad();
   }
 
   @override
   void dispose() {
     super.dispose();
     _timelogsFuture.ignore();
+    _tasksFuture.ignore();
   }
 
-  void _loadDaysInWeeks(timelogs) {
+  void _onLoad() async {
+    _timelogsFuture = _isar.getTimelogStream().first;
+    _tasksFuture = _isar.getTaskStream().first;
+    _loadTasks(await _tasksFuture);
+    _loadDaysInWeeks(await _timelogsFuture);
+    setState(() => _isLoading = false);
+  }
+
+  void _loadTasks(List<Task> tasks) {
+    for (var task in tasks) {
+      setState(() {
+        _tasks[task.id] = task;
+      });
+    }
+  }
+
+  double _calculateMomentHoursTotal(MomentHours momentHours) {
+    double result = 0;
+    momentHours.taskHours.forEach((key, value) {
+      if (_tasks[key]!.tags.any((element) => element.id == _selectedTag)) {
+        result += value;
+      }
+    });
+    return result;
+  }
+
+  void _loadDaysInWeeks(List<Timelog> timelogs) {
     if (mounted) {
       var (daysInWeeks, _) = getStatsHours(timelogs);
       setState(() {
-        _isLoading = false;
         _daysInWeeks = daysInWeeks;
         if (daysInWeeks.isNotEmpty) {
           int finalInnerIndex = 0;
@@ -58,7 +86,9 @@ class _StatsState extends State<Stats> {
             for (var innerIndex = daysInWeeks[outerIndex].length - 1;
                 innerIndex >= 0;
                 innerIndex--) {
-              if (daysInWeeks[outerIndex][innerIndex].totalHours != 0) {
+              if (_calculateMomentHoursTotal(
+                      _daysInWeeks[outerIndex][innerIndex]) !=
+                  0) {
                 finalInnerIndex = innerIndex;
                 finalOuterIndex = outerIndex;
                 found = true;
@@ -92,10 +122,14 @@ class _StatsState extends State<Stats> {
           _innerIndex += 1;
 
           while (_innerIndex < _daysInWeeks[_outerIndex].length - 1 &&
-              _daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+              _calculateMomentHoursTotal(
+                      _daysInWeeks[_outerIndex][_innerIndex]) ==
+                  0.0) {
             _innerIndex += 1;
           }
-          if (_daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+          if (_calculateMomentHoursTotal(
+                  _daysInWeeks[_outerIndex][_innerIndex]) ==
+              0.0) {
             if (_outerIndex < _daysInWeeks.length - 1) {
               _outerIndex += 1;
             } else {
@@ -130,10 +164,14 @@ class _StatsState extends State<Stats> {
           _innerIndex -= 1;
 
           while (_innerIndex > 0 &&
-              _daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+              _calculateMomentHoursTotal(
+                      _daysInWeeks[_outerIndex][_innerIndex]) ==
+                  0.0) {
             _innerIndex -= 1;
           }
-          if (_daysInWeeks[_outerIndex][_innerIndex].totalHours == 0.0) {
+          if (_calculateMomentHoursTotal(
+                  _daysInWeeks[_outerIndex][_innerIndex]) ==
+              0.0) {
             if (_outerIndex > 0) {
               _outerIndex -= 1;
             } else {
@@ -166,7 +204,7 @@ class _StatsState extends State<Stats> {
     if (_daysInWeeks.isNotEmpty && _daysInWeeks[_outerIndex].isNotEmpty) {
       moment = _daysInWeeks[_outerIndex][_innerIndex].moment;
       timeSpent = millisecondsToReadable(hoursToMilliseconds(
-          _daysInWeeks[_outerIndex][_innerIndex].totalHours));
+          _calculateMomentHoursTotal(_daysInWeeks[_outerIndex][_innerIndex])));
       chart = MomentRingChart(
         momentHours: _daysInWeeks[_outerIndex][_innerIndex],
       );
@@ -265,7 +303,9 @@ class _StatsState extends State<Stats> {
                     for (var i = finalInnerIndex;
                         i < _daysInWeeks[_outerIndex].length;
                         i++) {
-                      if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+                      if (_calculateMomentHoursTotal(
+                              _daysInWeeks[_outerIndex][i]) !=
+                          0) {
                         finalInnerIndex = i;
                         break;
                       }
@@ -275,7 +315,9 @@ class _StatsState extends State<Stats> {
                       _daysInWeeks[_outerIndex].length - 1) {
                     int finalInnerIndex = _daysInWeeks[_outerIndex].length - 1;
                     for (var i = finalInnerIndex; i > 0; i--) {
-                      if (_daysInWeeks[_outerIndex][i].totalHours != 0) {
+                      if (_calculateMomentHoursTotal(
+                              _daysInWeeks[_outerIndex][i]) !=
+                          0) {
                         finalInnerIndex = i;
                         break;
                       }
@@ -315,6 +357,7 @@ class _StatsState extends State<Stats> {
               if (_daysInWeeks.isNotEmpty &&
                   _daysInWeeks[_outerIndex].isNotEmpty) {
                 return MomentTasks(
+                  selectedTag: _selectedTag,
                   momentHours: _daysInWeeks[_outerIndex][_innerIndex],
                 );
               } else {
@@ -406,7 +449,12 @@ class _MomentRingChartState extends State<MomentRingChart> {
 
 class MomentTasks extends StatefulWidget {
   final MomentHours momentHours;
-  const MomentTasks({super.key, required this.momentHours});
+  final Id? selectedTag;
+  const MomentTasks({
+    super.key,
+    required this.momentHours,
+    required this.selectedTag,
+  });
 
   @override
   State<MomentTasks> createState() => _MomentTasksState();
@@ -418,6 +466,13 @@ class _MomentTasksState extends State<MomentTasks> {
   @override
   Widget build(BuildContext context) {
     final taskHours = widget.momentHours.taskHours.entries
+        .where((element) {
+          if (widget.selectedTag == null) {
+            return true;
+          } else {
+            return element.key == widget.selectedTag;
+          }
+        })
         .map((e) => (e.value, e.key))
         .toList();
 
