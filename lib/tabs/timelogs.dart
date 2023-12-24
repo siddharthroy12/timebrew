@@ -406,7 +406,7 @@ class TimelogEntry extends StatelessWidget {
                           task,
                           style: const TextStyle(
                             fontWeight: FontWeight.w400,
-                            fontSize: 14,
+                            fontSize: 16,
                           ),
                         ),
                         const SizedBox(
