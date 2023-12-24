@@ -365,6 +365,7 @@ class TimelogEntry extends StatelessWidget {
   final int endTime;
   final int milliseconds;
   final bool running;
+  final showOptions;
 
   const TimelogEntry({
     super.key,
@@ -375,6 +376,7 @@ class TimelogEntry extends StatelessWidget {
     required this.startTime,
     required this.endTime,
     required this.milliseconds,
+    this.showOptions = true,
   });
 
   @override
@@ -429,58 +431,61 @@ class TimelogEntry extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(
-                    width: 50,
-                    child: Center(
-                      child: PopupMenuButton(
-                        itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                          PopupMenuItem(
-                            value: 'edit',
-                            enabled: !running,
-                            onTap: () {
-                              showDialog<void>(
-                                context: context,
-                                builder: (context) {
-                                  return CreateTimelogDialog(
-                                    id: id,
-                                  );
-                                },
-                              );
-                            },
-                            child: const Text('Edit'),
+                  showOptions
+                      ? SizedBox(
+                          width: 50,
+                          child: Center(
+                            child: PopupMenuButton(
+                              itemBuilder: (BuildContext context) =>
+                                  <PopupMenuEntry>[
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  enabled: !running,
+                                  onTap: () {
+                                    showDialog<void>(
+                                      context: context,
+                                      builder: (context) {
+                                        return CreateTimelogDialog(
+                                          id: id,
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: const Text('Edit'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  enabled: !running,
+                                  onTap: () {
+                                    showDialog<void>(
+                                      context: context,
+                                      builder: (context) {
+                                        return ConfirmDeleteDialog(
+                                          description:
+                                              'Are you sure you want to delete this timelog for task "$task"',
+                                          onConfirm: () {
+                                            final isar = IsarService();
+
+                                            isar.deleteTimelog(id);
+
+                                            const snackBar = SnackBar(
+                                              content: Text('Timelog deleted'),
+                                            );
+
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(snackBar);
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
                           ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            enabled: !running,
-                            onTap: () {
-                              showDialog<void>(
-                                context: context,
-                                builder: (context) {
-                                  return ConfirmDeleteDialog(
-                                    description:
-                                        'Are you sure you want to delete this timelog for task "$task"',
-                                    onConfirm: () {
-                                      final isar = IsarService();
-
-                                      isar.deleteTimelog(id);
-
-                                      const snackBar = SnackBar(
-                                        content: Text('Timelog deleted'),
-                                      );
-
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(snackBar);
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
+                        )
+                      : Container()
                 ],
               ),
             ),

@@ -227,6 +227,7 @@ class TaskEntry extends StatelessWidget {
                 startTime: element.startTime,
                 endTime: element.endTime,
                 running: element.running,
+                showOptions: false,
               ),
             )
             .toList(),
