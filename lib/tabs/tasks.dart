@@ -188,10 +188,7 @@ class TaskEntry extends StatelessWidget {
                   label: Text(
                     tag.name,
                     style: TextStyle(
-                      color:
-                          HexColor.fromHex(tag.color).computeLuminance() >= 0.5
-                              ? Colors.white
-                              : Colors.black,
+                      color: Colors.black.withOpacity(0.8),
                     ),
                   ),
                 ),
