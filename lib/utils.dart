@@ -21,6 +21,24 @@ class MomentHours {
     required this.taskHours,
     required this.taskTimelogs,
   });
+
+  MomentHours getClone() {
+    return MomentHours(
+      moment: moment,
+      taskHours: Map.from(taskHours),
+      taskTimelogs: Map.from(taskTimelogs),
+    );
+  }
+
+  double getTotalHours() {
+    double result = 0;
+
+    taskHours.forEach((key, value) {
+      result += value;
+    });
+
+    return result;
+  }
 }
 
 /// Convert milliseconds to human readable format
