@@ -13,11 +13,8 @@ import 'package:timebrew/utils.dart';
 import 'package:timebrew/widgets/tag_filter.dart';
 
 class Timelogs extends StatefulWidget {
-  final Id? selectedTask;
-
   const Timelogs({
     super.key,
-    this.selectedTask,
   });
 
   @override
@@ -297,18 +294,6 @@ class _TimelogsState extends State<Timelogs>
                         });
                       }
 
-                      if (widget.selectedTask != null) {
-                        items.removeWhere((element) {
-                          bool result = true;
-                          if (element.task.value != null) {
-                            if (element.task.value!.id == widget.selectedTask) {
-                              result = false;
-                            }
-                          }
-                          return result;
-                        });
-                      }
-
                       items.sort((a, b) => a.startTime.compareTo(b.startTime));
                     }
                     if (items.isEmpty) {
@@ -365,7 +350,7 @@ class TimelogEntry extends StatelessWidget {
   final int endTime;
   final int milliseconds;
   final bool running;
-  final showOptions;
+  final bool showOptions;
 
   const TimelogEntry({
     super.key,

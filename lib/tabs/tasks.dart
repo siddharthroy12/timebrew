@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
+import 'package:timebrew/extensions/date_time.dart';
 import 'package:timebrew/extensions/hex_color.dart';
 import 'package:timebrew/models/tag.dart';
 import 'package:timebrew/models/task.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
+import 'package:timebrew/popups/create_timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
 import 'package:timebrew/tabs/timelogs.dart';
 import 'package:timebrew/utils.dart';
@@ -219,7 +221,7 @@ class TaskEntry extends StatelessWidget {
         tilePadding: padding,
         children: timelogs
             .map(
-              (element) => TimelogEntry(
+              (element) => AltTimelogEntry(
                 id: element.id,
                 task: (element.task.value?.name ?? ''),
                 description: element.description,
@@ -237,8 +239,11 @@ class TaskEntry extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => Timelogs(
-              selectedTask: id,
+            builder: (context) => Scaffold(
+              appBar: AppBar(title: Text('$name Timelogs')),
+              body: TimelogList(
+                taskId: id,
+              ),
             ),
           ),
         );
@@ -412,6 +417,194 @@ class _TaskListState extends State<TaskList> {
           link: task.link,
         );
       },
+    );
+  }
+}
+
+class TimelogList extends StatefulWidget {
+  final Id taskId;
+  const TimelogList({super.key, required this.taskId});
+
+  @override
+  State<TimelogList> createState() => _TimelogListState();
+}
+
+class _TimelogListState extends State<TimelogList> {
+  final _isar = IsarService();
+  List<Timelog> _timelogs = [];
+
+  void _loadTimelogs() {
+    _isar.getTaskTimelogStream(widget.taskId).first.then((value) {
+      setState(() {
+        _timelogs = value;
+        if (_timelogs.isNotEmpty) {
+          _timelogs.sort((a, b) => b.startTime.compareTo(a.startTime));
+        }
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTimelogs();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: _timelogs.length,
+      separatorBuilder: (c, i) => const Divider(
+        height: 0,
+      ),
+      itemBuilder: (context, index) {
+        Timelog timelog = _timelogs[index];
+        return AltTimelogEntry(
+          id: timelog.id,
+          running: timelog.running,
+          task: timelog.task.value?.name ?? '',
+          description: timelog.description,
+          startTime: timelog.startTime,
+          endTime: timelog.endTime,
+          milliseconds: timelog.endTime - timelog.startTime,
+        );
+      },
+    );
+  }
+}
+
+class AltTimelogEntry extends StatelessWidget {
+  final Id id;
+  final String task;
+  final String description;
+  final int startTime;
+  final int endTime;
+  final int milliseconds;
+  final bool running;
+  final bool showOptions;
+
+  const AltTimelogEntry({
+    super.key,
+    required this.id,
+    required this.running,
+    required this.task,
+    required this.description,
+    required this.startTime,
+    required this.endTime,
+    required this.milliseconds,
+    this.showOptions = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final [month, date] = DateTime.fromMillisecondsSinceEpoch(startTime)
+        .toDateString()
+        .split(',')
+        .first
+        .split(' ');
+    return InkWell(
+      onTap: () {},
+      child: Padding(
+        padding: const EdgeInsets.only(top: 15, bottom: 15, left: 0, right: 5),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 70,
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text(date),
+                          Text(month),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${millisecondsToTime(startTime)} - ${millisecondsToTime(endTime)} · ${millisecondsToReadable(milliseconds)}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        const SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          description.isEmpty ? 'No description' : description,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  showOptions
+                      ? SizedBox(
+                          width: 50,
+                          child: Center(
+                            child: PopupMenuButton(
+                              itemBuilder: (BuildContext context) =>
+                                  <PopupMenuEntry>[
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  enabled: !running,
+                                  onTap: () {
+                                    showDialog<void>(
+                                      context: context,
+                                      builder: (context) {
+                                        return CreateTimelogDialog(
+                                          id: id,
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: const Text('Edit'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  enabled: !running,
+                                  onTap: () {
+                                    showDialog<void>(
+                                      context: context,
+                                      builder: (context) {
+                                        return ConfirmDeleteDialog(
+                                          description:
+                                              'Are you sure you want to delete this timelog for task "$task"',
+                                          onConfirm: () {
+                                            final isar = IsarService();
+
+                                            isar.deleteTimelog(id);
+
+                                            const snackBar = SnackBar(
+                                              content: Text('Timelog deleted'),
+                                            );
+
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(snackBar);
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : Container()
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
