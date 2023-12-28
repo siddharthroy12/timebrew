@@ -11,6 +11,7 @@ import 'package:timebrew/widgets/conditional.dart';
 import 'package:timebrew/widgets/no_data_emoji.dart';
 import 'package:timebrew/utils.dart';
 import 'package:timebrew/widgets/tag_filter.dart';
+import 'package:scroll_to_index/scroll_to_index.dart';
 
 class Timelogs extends StatefulWidget {
   const Timelogs({
@@ -26,7 +27,9 @@ class _TimelogsState extends State<Timelogs>
   Id? _selectedTag;
   final _isar = IsarService();
   Map<String, List<Timelog>> _groupedTimelogs = {};
-  final ScrollController _dateScrollController = ScrollController();
+  final AutoScrollController _dateScrollController = AutoScrollController(
+    axis: Axis.horizontal,
+  );
   List<String> _dates = [];
   int _dateIndex = 0;
   bool _isLoading = true;
@@ -44,8 +47,8 @@ class _TimelogsState extends State<Timelogs>
 
   void scrollDateListToIndex() {
     setState(() {
-      _dateScrollController.animateTo(_dateIndex * 40.0,
-          duration: const Duration(milliseconds: 250), curve: Curves.easeIn);
+      _dateScrollController.scrollToIndex(_dateIndex,
+          preferPosition: AutoScrollPosition.middle);
     });
   }
 
@@ -140,36 +143,61 @@ class _TimelogsState extends State<Timelogs>
                           _dates[index].split(',').first.split(' ');
                       final hasLogs =
                           _groupedTimelogs.containsKey(_dates[index]);
-                      return SizedBox(
-                        width: 35,
-                        child: Material(
-                          color: index != _dateIndex
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.inversePrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(6),
-                            onTap: hasLogs
-                                ? () {
-                                    setState(() {
-                                      _dateIndex = index;
-                                    });
-                                  }
-                                : null,
-                            child: Container(
-                              color: hasLogs
-                                  ? Colors.transparent
-                                  : Colors.black.withAlpha(90),
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      color: Colors.black.withAlpha(20),
+                      return AutoScrollTag(
+                        key: ValueKey(index),
+                        controller: _dateScrollController,
+                        index: index,
+                        child: SizedBox(
+                          width: 35,
+                          child: Material(
+                            color: index != _dateIndex
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.inversePrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(6),
+                              onTap: hasLogs
+                                  ? () {
+                                      setState(() {
+                                        _dateIndex = index;
+                                      });
+                                    }
+                                  : null,
+                              child: Container(
+                                color: hasLogs
+                                    ? Colors.transparent
+                                    : Colors.black.withAlpha(90),
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        color: Colors.black.withAlpha(20),
+                                        child: Center(
+                                          child: Text(
+                                            month,
+                                            style: TextStyle(
+                                              color: index != _dateIndex
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .onPrimary
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                              fontWeight: index != _dateIndex
+                                                  ? FontWeight.w500
+                                                  : FontWeight.w400,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
                                       child: Center(
                                         child: Text(
-                                          month,
+                                          date,
                                           style: TextStyle(
                                             color: index != _dateIndex
                                                 ? Theme.of(context)
@@ -181,33 +209,13 @@ class _TimelogsState extends State<Timelogs>
                                             fontWeight: index != _dateIndex
                                                 ? FontWeight.w500
                                                 : FontWeight.w400,
-                                            fontSize: 13,
+                                            fontSize: 15,
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Center(
-                                      child: Text(
-                                        date,
-                                        style: TextStyle(
-                                          color: index != _dateIndex
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onPrimary
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                          fontWeight: index != _dateIndex
-                                              ? FontWeight.w500
-                                              : FontWeight.w400,
-                                          fontSize: 15,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                ],
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -245,7 +253,7 @@ class _TimelogsState extends State<Timelogs>
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        titleSpacing: 5,
+        titleSpacing: 0,
         title: Row(
           children: [
             IconButton(
