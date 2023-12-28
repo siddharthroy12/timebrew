@@ -6,15 +6,18 @@ class AppBarMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const Settings(),
-          ),
-        );
-      },
-      icon: const Icon(Icons.more_vert_rounded),
+    return Padding(
+      padding: const EdgeInsets.only(right: 5.0),
+      child: IconButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const Settings(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.more_vert_rounded),
+      ),
     );
   }
 }

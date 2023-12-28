@@ -28,7 +28,7 @@ class _TimelogsState extends State<Timelogs>
   Map<String, List<Timelog>> _groupedTimelogs = {};
   final ScrollController _dateScrollController = ScrollController();
   List<String> _dates = [];
-  String selectedDate = 'Logs';
+  int _dateIndex = 0;
   bool _isLoading = true;
   int _minDateTimestamp = 0;
   int _maxDateTimestamp = 0;
@@ -40,6 +40,13 @@ class _TimelogsState extends State<Timelogs>
   void initState() {
     super.initState();
     _loadTimelogs();
+  }
+
+  void scrollDateListToIndex() {
+    setState(() {
+      _dateScrollController.animateTo(_dateIndex * 40.0,
+          duration: const Duration(milliseconds: 250), curve: Curves.easeIn);
+    });
   }
 
   void _loadTimelogs() {
@@ -82,9 +89,11 @@ class _TimelogsState extends State<Timelogs>
           dates.add(dateTimeString);
         }
 
-        selectedDate = DateTime.fromMillisecondsSinceEpoch(_maxDateTimestamp)
-            .toDateString();
+        var selectedDate =
+            DateTime.fromMillisecondsSinceEpoch(_maxDateTimestamp)
+                .toDateString();
         setState(() {
+          _dateIndex = dates.indexOf(selectedDate);
           _groupedTimelogs = groupedTimelogs;
           _dates = dates;
           _isLoading = false;
@@ -134,7 +143,7 @@ class _TimelogsState extends State<Timelogs>
                       return SizedBox(
                         width: 35,
                         child: Material(
-                          color: _dates[index] != selectedDate
+                          color: index != _dateIndex
                               ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.inversePrimary,
                           shape: RoundedRectangleBorder(
@@ -145,7 +154,7 @@ class _TimelogsState extends State<Timelogs>
                             onTap: hasLogs
                                 ? () {
                                     setState(() {
-                                      selectedDate = _dates[index];
+                                      _dateIndex = index;
                                     });
                                   }
                                 : null,
@@ -162,17 +171,16 @@ class _TimelogsState extends State<Timelogs>
                                         child: Text(
                                           month,
                                           style: TextStyle(
-                                            color: _dates[index] != selectedDate
+                                            color: index != _dateIndex
                                                 ? Theme.of(context)
                                                     .colorScheme
                                                     .onPrimary
                                                 : Theme.of(context)
                                                     .colorScheme
                                                     .primary,
-                                            fontWeight:
-                                                _dates[index] != selectedDate
-                                                    ? FontWeight.w500
-                                                    : FontWeight.w400,
+                                            fontWeight: index != _dateIndex
+                                                ? FontWeight.w500
+                                                : FontWeight.w400,
                                             fontSize: 13,
                                           ),
                                         ),
@@ -184,17 +192,16 @@ class _TimelogsState extends State<Timelogs>
                                       child: Text(
                                         date,
                                         style: TextStyle(
-                                          color: _dates[index] != selectedDate
+                                          color: index != _dateIndex
                                               ? Theme.of(context)
                                                   .colorScheme
                                                   .onPrimary
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .primary,
-                                          fontWeight:
-                                              _dates[index] != selectedDate
-                                                  ? FontWeight.w500
-                                                  : FontWeight.w400,
+                                          fontWeight: index != _dateIndex
+                                              ? FontWeight.w500
+                                              : FontWeight.w400,
                                           fontSize: 15,
                                         ),
                                       ),
@@ -238,12 +245,41 @@ class _TimelogsState extends State<Timelogs>
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        title: Text(selectedDate),
+        titleSpacing: 5,
+        title: Row(
+          children: [
+            IconButton(
+                onPressed: hasData
+                    ? () {
+                        setState(() {
+                          if (_dateIndex < _dates.length - 1) {
+                            _dateIndex++;
+                            scrollDateListToIndex();
+                          }
+                        });
+                      }
+                    : null,
+                icon: const Icon(Icons.chevron_left)),
+            Text(hasData ? _dates[_dateIndex] : 'Logs'),
+            IconButton(
+                onPressed: hasData
+                    ? () {
+                        setState(() {
+                          if (_dateIndex > 0) {
+                            _dateIndex--;
+                            scrollDateListToIndex();
+                          }
+                        });
+                      }
+                    : null,
+                icon: const Icon(Icons.chevron_right)),
+          ],
+        ),
         actions: [
           IconButton(
             onPressed: () {
               final initialDate =
-                  DateTimeFormatting.fromDateString(selectedDate);
+                  DateTimeFormatting.fromDateString(_dates[_dateIndex]);
               final firstDate =
                   DateTime.fromMillisecondsSinceEpoch(_minDateTimestamp);
               final lastDate =
@@ -258,7 +294,8 @@ class _TimelogsState extends State<Timelogs>
                   setState(
                     () {
                       if (value != null) {
-                        selectedDate = value.toDateString();
+                        _dateIndex = _dates.indexOf(value.toDateString());
+                        scrollDateListToIndex();
                       }
                     },
                   );
@@ -269,7 +306,7 @@ class _TimelogsState extends State<Timelogs>
               Icons.calendar_month_rounded,
             ),
           ),
-          const AppBarMenuButton()
+          const AppBarMenuButton(),
         ],
         bottom: bottomWidget,
       ),
@@ -286,8 +323,8 @@ class _TimelogsState extends State<Timelogs>
                 child: Builder(
                   builder: (context) {
                     List<Timelog> items = [];
-                    if (_groupedTimelogs.containsKey(selectedDate)) {
-                      items = _groupedTimelogs[selectedDate]!.toList();
+                    if (_groupedTimelogs.containsKey(_dates[_dateIndex])) {
+                      items = _groupedTimelogs[_dates[_dateIndex]]!.toList();
 
                       if (_selectedTag != null) {
                         items.removeWhere((element) {
@@ -317,7 +354,7 @@ class _TimelogsState extends State<Timelogs>
                           const SizedBox(
                             height: 30,
                           ),
-                          Text('No logs in $selectedDate'),
+                          Text('No logs in ${_dates[_dateIndex]}'),
                         ],
                       ));
                     }
