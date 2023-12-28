@@ -129,6 +129,8 @@ class _TimelogsState extends State<Timelogs>
                     itemBuilder: (context, index) {
                       final [month, date] =
                           _dates[index].split(',').first.split(' ');
+                      final hasLogs =
+                          _groupedTimelogs.containsKey(_dates[index]);
                       return SizedBox(
                         width: 35,
                         child: Material(
@@ -140,19 +142,47 @@ class _TimelogsState extends State<Timelogs>
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(6),
-                            onTap: () {
-                              setState(() {
-                                selectedDate = _dates[index];
-                              });
-                            },
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    color: Colors.black.withAlpha(20),
+                            onTap: hasLogs
+                                ? () {
+                                    setState(() {
+                                      selectedDate = _dates[index];
+                                    });
+                                  }
+                                : null,
+                            child: Container(
+                              color: hasLogs
+                                  ? Colors.transparent
+                                  : Colors.black.withAlpha(90),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      color: Colors.black.withAlpha(20),
+                                      child: Center(
+                                        child: Text(
+                                          month,
+                                          style: TextStyle(
+                                            color: _dates[index] != selectedDate
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimary
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
+                                            fontWeight:
+                                                _dates[index] != selectedDate
+                                                    ? FontWeight.w500
+                                                    : FontWeight.w400,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
                                     child: Center(
                                       child: Text(
-                                        month,
+                                        date,
                                         style: TextStyle(
                                           color: _dates[index] != selectedDate
                                               ? Theme.of(context)
@@ -165,34 +195,13 @@ class _TimelogsState extends State<Timelogs>
                                               _dates[index] != selectedDate
                                                   ? FontWeight.w500
                                                   : FontWeight.w400,
-                                          fontSize: 13,
+                                          fontSize: 15,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      date,
-                                      style: TextStyle(
-                                        color: _dates[index] != selectedDate
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .onPrimary
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                        fontWeight:
-                                            _dates[index] != selectedDate
-                                                ? FontWeight.w500
-                                                : FontWeight.w400,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              ],
+                                  )
+                                ],
+                              ),
                             ),
                           ),
                         ),

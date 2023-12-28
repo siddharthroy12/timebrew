@@ -10,7 +10,6 @@ import 'package:timebrew/popups/confirm_delete.dart';
 import 'package:timebrew/popups/create_task.dart';
 import 'package:timebrew/popups/create_timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
-import 'package:timebrew/tabs/timelogs.dart';
 import 'package:timebrew/utils.dart';
 import 'package:timebrew/widgets/app_bar_menu_button.dart';
 import 'package:timebrew/widgets/conditional.dart';
