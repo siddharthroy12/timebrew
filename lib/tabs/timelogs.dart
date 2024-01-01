@@ -296,6 +296,9 @@ class _TimelogsState extends State<Timelogs>
                 context: context,
                 initialDate: initialDate,
                 firstDate: firstDate,
+                selectableDayPredicate: (date) {
+                  return _groupedTimelogs.containsKey(date.toDateString());
+                },
                 lastDate: lastDate,
               ).then(
                 (value) {
