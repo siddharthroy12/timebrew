@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
+import 'package:timebrew/extensions/date_time.dart';
 import 'package:timebrew/models/task.dart';
 import 'package:timebrew/models/timelog.dart';
 import 'package:timebrew/services/isar_service.dart';
@@ -23,6 +24,7 @@ class _StatsState extends State<Stats> {
   final _isar = IsarService();
   List<List<MomentHours>> _unFilteredDaysInWeeks = [];
   List<List<MomentHours>> _daysInWeeks = [];
+  Map<String, Pair<int, int>> _daysThatHasTimelogs = Map();
   bool _isLoading = true;
   int _outerIndex = 0;
   int _innerIndex = 0;
@@ -106,6 +108,14 @@ class _StatsState extends State<Stats> {
         _unFilteredDaysInWeeks = daysInWeeks;
         _daysInWeeks = daysInWeeks;
         _filterDaysInWeeks();
+        _daysThatHasTimelogs = {};
+        for (var (i, week) in daysInWeeks.indexed) {
+          for (var (j, day) in week.indexed) {
+            if (day.taskHours.isNotEmpty) {
+              _daysThatHasTimelogs[day.moment] = Pair(first: i, last: j);
+            }
+          }
+        }
         if (daysInWeeks.isNotEmpty) {
           int finalInnerIndex = 0;
           int finalOuterIndex = 0;
@@ -138,6 +148,14 @@ class _StatsState extends State<Stats> {
     }
   }
 
+  void animateToWeek(int index) {
+    _controller.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.linear,
+    );
+  }
+
   void _selectNextMoment() {
     setState(() {
       int previousOuterIndex = _outerIndex;
@@ -167,11 +185,7 @@ class _StatsState extends State<Stats> {
         _innerIndex = 0;
       }
 
-      _controller.animateToPage(
-        _outerIndex,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.linear,
-      );
+      animateToWeek(_outerIndex);
     });
   }
 
@@ -204,11 +218,7 @@ class _StatsState extends State<Stats> {
       if (previousOuterIndex > _outerIndex) {
         _innerIndex = _daysInWeeks[_outerIndex].length - 1;
       }
-      _controller.animateToPage(
-        _outerIndex,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.linear,
-      );
+      animateToWeek(_outerIndex);
     });
   }
 
@@ -239,8 +249,45 @@ class _StatsState extends State<Stats> {
       appBar: AppBar(
         scrolledUnderElevation: 0,
         title: const Text('Stats'),
-        actions: const [
-          AppBarMenuButton(),
+        actions: [
+          IconButton(
+            onPressed: () {
+              final initialDate = DateTimeFormatting.fromDateString(
+                  _daysInWeeks[_outerIndex][_innerIndex].moment);
+              final firstDate = DateTimeFormatting.fromDateString(
+                  _daysInWeeks.first.first.moment);
+              final lastDate = DateTimeFormatting.fromDateString(
+                  _daysInWeeks.last.last.moment);
+              showDatePicker(
+                  context: context,
+                  initialDate: initialDate,
+                  firstDate: firstDate,
+                  lastDate: lastDate,
+                  selectableDayPredicate: (date) {
+                    return _daysThatHasTimelogs
+                        .containsKey(date.toDateString());
+                  }).then(
+                (value) {
+                  setState(
+                    () {
+                      if (value != null) {
+                        setState(() {
+                          var pair = _daysThatHasTimelogs[value.toDateString()];
+                          _outerIndex = pair!.first;
+                          _innerIndex = pair.last;
+                          animateToWeek(pair.first);
+                        });
+                      }
+                    },
+                  );
+                },
+              );
+            },
+            icon: const Icon(
+              Icons.calendar_month_rounded,
+            ),
+          ),
+          const AppBarMenuButton(),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(55),
